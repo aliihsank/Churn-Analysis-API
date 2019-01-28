@@ -9,7 +9,7 @@
 - Project uses a NoQSL MongoDB to store users and models details
 - This project runs 6 different classification algorithm from scikit-learn and neural network with different parameters from keras
 
-----------------------------
+
 ## USED SERVICES ##
 - Heroku to publish python-flask server app
 - MongoDB cloud for nosql database
