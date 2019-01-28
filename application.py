@@ -49,9 +49,12 @@ def ValidateUserPlan(username, requestedMethod):
         
         
 def LoadModelFrom(modelPath):
-    s3 = boto3.resource("s3").Bucket("churn-bucket")
-    
-    loaded_model = pickle.loads(s3.Object(key=modelPath).get()["Body"].read())
+    try:
+        s3 = boto3.resource("s3").Bucket("churn-bucket")
+        
+        loaded_model = pickle.loads(s3.Object(key=modelPath).get()["Body"].read())
+    except Exception as e:
+                print("errrorrr2:" + e)
     
     return loaded_model
     
