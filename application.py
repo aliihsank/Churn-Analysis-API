@@ -163,7 +163,7 @@ class Predict(Resource):
         
         if(ValidateUser(username, password)):
             #Load Model
-            model = self.LoadModelFrom(username + modelname + ".txt")
+            model = LoadModelFrom(username + modelname + ".txt")
             
             #Feature Scaling
             ss = StandardScaler()
