@@ -23,9 +23,17 @@ api = Api(app)
 CORS(app)
 
 
-def ValidateUser(uname, password):
-    return True
-
+def ValidateUser(username, password):
+    uri = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
+    client = pymongo.MongoClient(uri, ssl=True)
+    db = client.churndb
+            
+    if db.userdetails.find_one({"username": username, "password": password}) is None:
+        return False
+    else:
+        return True
+        
+        
 def LoadModelFrom(modelPath):
     s3 = boto3.resource("s3").Bucket("churn-bucket")
     
@@ -145,9 +153,11 @@ class ModelList(Resource):
             client = pymongo.MongoClient(uri, ssl=True)
             db = client.churndb
             
-            post = db.modeldetails.find_one({"username": username}, {'_id': 0})
-            
-            return post["models"]
+            if db.modeldetails.find_one({"username": username}, {'_id': 0}) is None:
+                return {"error": "User doesn't have any model"}
+            else:
+                post = db.modeldetails.find_one({"username": username}, {'_id': 0})
+                return post["models"]
         else:
             return {"error": "User doesn't exist"}
         
