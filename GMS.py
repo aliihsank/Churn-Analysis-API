@@ -81,9 +81,12 @@ class GMS:
         for col in self.categoricalcolumns:
             labelEncoder = LabelEncoder()
             self.X[:, i] = labelEncoder.fit_transform(self.X[:, i])
-            feature_list.append(i)
+            
+            if(len(pd.unique(self.X[:, i]).tolist()) > 2):
+                feature_list.append(i)
             i += 1
-                    
+        
+        
         oneHotEncoder = OneHotEncoder(categorical_features = feature_list)
         self.X = oneHotEncoder.fit_transform(self.X).toarray()
         
