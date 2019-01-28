@@ -193,8 +193,8 @@ class Predict(Resource):
         predictset = ss.fit_transform(predictset)
         
         #Make prediction
-        result = model.predict(predictset)
-        print("Result bu: " + result + "  : type:" + result.dtpye + " :  0.eleman:" + result[0])
+        result = model.predict(predictset).tolist()
+        print("Result bu: " + result)
         #Return result
         return {'prediction': result}
         
