@@ -186,38 +186,23 @@ class Predict(Resource):
         modelname = data["modelname"]
         predictset = data["predictset"]
         
-        model = LoadModelFrom(username + modelname + ".txt")
-        
-        #Feature Scaling (predictset comes onehotencoded)
-        ss = StandardScaler()
-        predictset = ss.fit_transform(predictset)
-        
-        #Make prediction
-        result = model.predict(predictset).tolist()
-        print("Result bu: " + result)
-        #Return result
-        return {'prediction': result}
-        
-        
-        """
         #Load Model
         if(MakeValidations(username, password, 'predict')):
             #Load Model
             model = LoadModelFrom(username + modelname + ".txt")
-            
+        
             #Feature Scaling (predictset comes onehotencoded)
             ss = StandardScaler()
             predictset = ss.fit_transform(predictset)
-                
-            #Make prediction
-            result = model.predict(predictset)
             
+            #Make prediction
+            result = model.predict(predictset).tolist()
             #Return result
             return {'prediction': result}
             
         else:
             return {"error": "User doesn't exist"}
-            """
+            
         
         
         
