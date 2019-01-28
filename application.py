@@ -186,7 +186,7 @@ class Predict(Resource):
         modelname = data["modelname"]
         predictset = data["predictset"]
         
-        return {'info': '123'}
+        model = LoadModelFrom(username + modelname + ".txt")
         
         """
         #Load Model
