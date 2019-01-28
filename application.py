@@ -194,7 +194,7 @@ class Predict(Resource):
         
         #Make prediction
         result = model.predict(predictset)
-        
+        print("Result bu: " + result)
         #Return result
         return {'prediction': result}
         
