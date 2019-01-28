@@ -192,6 +192,9 @@ class Predict(Resource):
         ss = StandardScaler()
         predictset = ss.fit_transform(predictset)
         
+        #Make prediction
+        result = model.predict(predictset)
+        
         return {'info': '123'}
         
         """
