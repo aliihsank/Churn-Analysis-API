@@ -11,14 +11,12 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 
 from sklearn.metrics import accuracy_score
 
-
 import pandas as pd
 import numpy as np
+
 import pickle
 import pymongo
-
-import os 
-
+import boto3
 
 
 class GMS:
@@ -44,6 +42,18 @@ class GMS:
         self.db = self.client.churndb
         self.modeldetails = self.db.modeldetails
         
+    
+
+    def SaveModelTo(self, modelPath):
+        s3 = boto3.resource('s3')
+        
+        bucket_name = 'churn-bucket'
+        
+        modelInBytes = pickle.dumps(self.bestModel)
+ 
+        s3.meta.client.put_object(Body=modelInBytes, Bucket=bucket_name, Key=modelPath)
+        
+
 
     def Preprocess(self):
         '''Make dataset a dataframe '''
@@ -206,11 +216,8 @@ class GMS:
         self.GenerateModels("RandomForest")
         
         '''Save best model to memory'''
-        filename = self.userName + self.modelName + '.sav'
-        pickle.dump(self.bestModel, open(filename, 'wb'))
+        self.SaveModelTo(self.userName + self.modelName + ".txt")
         
-        cwd = os.getcwd()
-        print("cwd: " + cwd)
         
         '''Save the bestModel path to database'''
         
