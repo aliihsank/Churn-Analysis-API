@@ -1,13 +1,19 @@
 # Project : Churnify
 
-- This project is in alpha
+- This project is in development
 - This project is a part of my graduation - thesis project
 
 -----------------------------
 
-- This project is being developed using flask-restful, pymongo, scikit-learn and keras
+- This project is being developed using flask-restful, pymongo, boto3, scikit-learn and keras
 - Project uses a NoQSL MongoDB to store users and models details
 - This project runs 6 different classification algorithm from scikit-learn and neural network with different parameters from keras
+
+----------------------------
+## USED SERVICES ##
+- Heroku to publish python-flask server app
+- MongoDB cloud for nosql database
+- AWS S3 for file storage
 
 -------------------------------
 
@@ -35,18 +41,22 @@ GMS has 6 different classification algorithm and neural network to try with diff
 
 Live version of this code is in:
 
-https://denemeq.herokuapp.com/
+https://churn-analysis-api.herokuapp.com/
 
 You can send requests to following URLs:
 
-GET https://denemeq.herokuapp.com/test
+GET https://churn-analysis-api.herokuapp.com/test
 
 
-POST https://denemeq.herokuapp.com/register
+POST https://churn-analysis-api.herokuapp.com/register
 
-POST https://denemeq.herokuapp.com/login
+POST https://churn-analysis-api.herokuapp.com/login
 
 
-POST https://denemeq.herokuapp.com/columnsInfos
+POST https://churn-analysis-api.herokuapp.com/columnsInfos
 
-POST https://denemeq.herokuapp.com/train
+POST https://churn-analysis-api.herokuapp.com/train
+
+POST https://churn-analysis-api.herokuapp.com/predict
+
+POST https://churn-analysis-api.herokuapp.com/modelList
