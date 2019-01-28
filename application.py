@@ -15,23 +15,37 @@ import boto3
 
 from GMS import GMS
 
+dburi = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
 
-data_frame = []
 
 app = Flask(__name__)
 api = Api(app)
 CORS(app)
 
 
+
+def MakeValidations(username, password, requestedMethod):
+    if (ValidateUser(username, password)):
+        if(ValidateUserPlan(username, requestedMethod)):
+            return True
+    
+    return False
+
+
 def ValidateUser(username, password):
-    uri = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
-    client = pymongo.MongoClient(uri, ssl=True)
+    
+    client = pymongo.MongoClient(dburi, ssl=True)
     db = client.churndb
             
     if db.userdetails.find_one({"username": username, "password": password}) is None:
         return False
     else:
         return True
+    
+    
+def ValidateUserPlan(username, requestedMethod):
+    return True
+    
         
         
 def LoadModelFrom(modelPath):
@@ -58,8 +72,7 @@ class Register(Resource):
         if email is None or username is None or password is None:
             return {'info': '0'}
         else:
-            uri = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
-            client = pymongo.MongoClient(uri, ssl=True)
+            client = pymongo.MongoClient(dburi, ssl=True)
             db = client.churndb
             
             post = { "email":email, "username": username, "password":password }
@@ -74,8 +87,7 @@ class Login(Resource):
         username = data["username"]
         password = data["password"]
 
-        uri = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
-        client = pymongo.MongoClient(uri, ssl=True)
+        client = pymongo.MongoClient(dburi, ssl=True)
         db = client.churndb
         
         if db.userdetails.find_one({"username": username, "password": password}) is None:
@@ -94,7 +106,7 @@ class ColumnsInfos(Resource):
         columns = data["columns"]
         dataset = data["dataset"]
         
-        if(ValidateUser(username, password)):
+        if(MakeValidations(username, password, 'columnsinfos')):
             data_frame = pd.DataFrame(dataset, columns = columns)
             data_frame = data_frame[columns].apply(pd.to_numeric, errors="ignore")
             
@@ -126,7 +138,7 @@ class Train(Resource):
         categoricalcolumns = data["categoricalcolumns"]
         numericalcolumns = data["numericalcolumns"]
         
-        if(ValidateUser(username, password)):
+        if(MakeValidations(username, password, 'train')):
             try:
                 gms = GMS(username, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns)
                 
@@ -148,9 +160,8 @@ class ModelList(Resource):
         username = data["username"]
         password = data["password"]
         
-        if(ValidateUser(username, password)):
-            uri = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
-            client = pymongo.MongoClient(uri, ssl=True)
+        if(MakeValidations(username, password, 'modellist')):
+            client = pymongo.MongoClient(dburi, ssl=True)
             db = client.churndb
             
             if db.modeldetails.find_one({"username": username}, {'_id': 0}) is None:
@@ -171,17 +182,18 @@ class Predict(Resource):
         modelname = data["modelname"]
         predictset = data["predictset"]
         
-        if(ValidateUser(username, password)):
+        if(MakeValidations(username, password, 'predict')):
             #Load Model
             model = LoadModelFrom(username + modelname + ".txt")
-            
-            #Feature Scaling
-            ss = StandardScaler()
-            predictset = ss.fit_transform(predictset)
-            
-            #Make prediction
-            result = model.predict(predictset)
-            
+            try:
+                #Feature Scaling (predictset comes onehotencoded)
+                ss = StandardScaler()
+                predictset = ss.fit_transform(predictset)
+                
+                #Make prediction
+                result = model.predict(predictset)
+            except Exception as e:
+                print("errrorrr:" + e)
             #Return result
             return {'prediction': result}
             
