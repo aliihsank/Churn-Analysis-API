@@ -185,6 +185,21 @@ class Predict(Resource):
         modelname = data["modelname"]
         predictset = data["predictset"]
         
+        #Load Model
+        model = LoadModelFrom(username + modelname + ".txt")
+        try:
+            #Feature Scaling (predictset comes onehotencoded)
+            ss = StandardScaler()
+            predictset = ss.fit_transform(predictset)
+                
+            #Make prediction
+            result = model.predict(predictset)
+        except Exception as e:
+            print("errrorrr:" + e)
+        #Return result
+        return {'prediction': result}
+        
+        """
         if(MakeValidations(username, password, 'predict')):
             #Load Model
             model = LoadModelFrom(username + modelname + ".txt")
@@ -202,7 +217,7 @@ class Predict(Resource):
             
         else:
             return {"error": "User doesn't exist"}
-            
+            """
         
         
         
