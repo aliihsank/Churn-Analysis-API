@@ -5,7 +5,7 @@
 
 -----------------------------
 
-- This project is being developed using flask-restful, pymongo, boto3, scikit-learn and keras
+- This project is being developed using flask-restful, pymongo, boto3, scikit-learn, tensorflow and keras
 - Project uses a NoQSL MongoDB to store users and models details
 - This project runs 6 different classification algorithm from scikit-learn and neural network with different parameters from keras
 
@@ -14,7 +14,8 @@
 - Heroku to publish python-flask server app
 - MongoDB cloud for nosql database
 - AWS S3 for file storage
-
+- Keras for neural network construction
+- Tensorflow as backend to Keras
 -------------------------------
 
 It has following methods that can be requested:
@@ -24,7 +25,8 @@ It has following methods that can be requested:
 - Login (username, password)
 - ColumnsInfos (username, password, columns, dataset)
 - Train (username, password, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns)
-
+- Predict (username, password, modelname, predictset)
+- ModelList(username, password)
 
 ## GMS Module Details ##
 
