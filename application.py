@@ -188,6 +188,12 @@ class Predict(Resource):
         
         model = LoadModelFrom(username + modelname + ".txt")
         
+        #Feature Scaling (predictset comes onehotencoded)
+        ss = StandardScaler()
+        predictset = ss.fit_transform(predictset)
+        
+        return {'info': '123'}
+        
         """
         #Load Model
         if(MakeValidations(username, password, 'predict')):
