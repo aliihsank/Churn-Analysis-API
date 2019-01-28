@@ -195,7 +195,9 @@ class Predict(Resource):
         #Make prediction
         result = model.predict(predictset)
         
-        return {'info': '123'}
+        #Return result
+        return {'prediction': result}
+        
         
         """
         #Load Model
