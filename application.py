@@ -51,11 +51,11 @@ def ValidateUserPlan(username, requestedMethod):
 def LoadModelFrom(modelPath):
     try:
         s3 = boto3.resource("s3").Bucket("churn-bucket")
-        print("model load test 0")
+        
         loaded_model = pickle.loads(s3.Object(key=modelPath).get()["Body"].read())
-        print("model load test 1")
+        
     except Exception as e:
-                print("errrorrr2:" + e)
+                print("Error in model loading:" + e)
     
     return loaded_model
     
@@ -179,43 +179,28 @@ class ModelList(Resource):
         
 class Predict(Resource):
     def post(self):
-        print("predict test 0")
         data = request.get_json()
         
         username = data["username"]
         password = data["password"]
         modelname = data["modelname"]
         predictset = data["predictset"]
-        print("predict test 1")
-        #Load Model
-        model = LoadModelFrom(username + modelname + ".txt")
-        print("predict test 2")
-        try:
-            #Feature Scaling (predictset comes onehotencoded)
-            ss = StandardScaler()
-            predictset = ss.fit_transform(predictset)
-            print("predict test 3")
-            #Make prediction
-            result = model.predict(predictset)
-            print("predict test 4")
-        except Exception as e:
-            print("errrorrr:" + e)
-        #Return result
-        return {'prediction': result}
+        
+        return {'info': '123'}
         
         """
+        #Load Model
         if(MakeValidations(username, password, 'predict')):
             #Load Model
             model = LoadModelFrom(username + modelname + ".txt")
-            try:
-                #Feature Scaling (predictset comes onehotencoded)
-                ss = StandardScaler()
-                predictset = ss.fit_transform(predictset)
+            
+            #Feature Scaling (predictset comes onehotencoded)
+            ss = StandardScaler()
+            predictset = ss.fit_transform(predictset)
                 
-                #Make prediction
-                result = model.predict(predictset)
-            except Exception as e:
-                print("errrorrr:" + e)
+            #Make prediction
+            result = model.predict(predictset)
+            
             #Return result
             return {'prediction': result}
             
