@@ -178,13 +178,14 @@ class ModelList(Resource):
         
 class Predict(Resource):
     def post(self):
+        print("predict test 0")
         data = request.get_json()
         
         username = data["username"]
         password = data["password"]
         modelname = data["modelname"]
         predictset = data["predictset"]
-        
+        print("predict test 1")
         #Load Model
         model = LoadModelFrom(username + modelname + ".txt")
         try:
