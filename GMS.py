@@ -48,6 +48,40 @@ class GMS:
         self.modeldetails = self.db.modeldetails
         
     
+    def SaveModel(self):
+        '''Save best model to memory'''
+        self.SaveModelTo(self.userName + self.modelName + ".txt")
+        
+        
+        '''Save the bestModel path to database'''
+        
+        oldPost = self.modeldetails.find_one({"username":  self.userName })
+        
+        catCols = []
+        for catColIndex in self.categoricalcolumns:
+            catCols.append(dict({ "name": self.columns[catColIndex], "values": sorted(pd.unique(self.data_frame.iloc[:, catColIndex].values).tolist()) }))
+        
+        numCols = []
+        for numColIndex in self.numericalcolumns:
+            numCols.append(self.columns[numColIndex])
+            
+        targetCol = dict({ "name": self.columns[self.target], "values": sorted(pd.unique(self.data_frame.iloc[:, self.target].values).tolist()) })
+        
+        newModel = {"modelname": self.modelName, "catCols": catCols , "numCols": numCols, "targetCol": targetCol, "algorithm": self.algorithm, "accuracy": self.maxScore}
+        
+        if oldPost is None:
+            '''User doesn't have any model previously '''
+            oldPost = {"username": self.userName, "models": [dict(newModel)]}
+        else:
+            '''User has at least one model before '''
+            prevModels = oldPost["models"]
+            prevModels.append(dict(newModel))
+            oldPost["models"] = prevModels
+        
+        
+        self.modeldetails.update_one({"username": self.userName}, {"$set": dict(oldPost)}, upsert=True)
+        
+    
 
     def SaveModelTo(self, modelPath):
         s3 = boto3.resource('s3')
@@ -109,9 +143,8 @@ class GMS:
             self.X = oneHotEncoder.fit_transform(self.X).toarray()
             
             '''Remove dummy variable'''
-            for row in self.X:
-                for colIndex in numOfUniqueValsForCatCols:
-                    del row[colIndex]
+            for index in numOfUniqueValsForCatCols:
+                self.X = np.delete(self.X, index, 1)
             
         
     
@@ -254,8 +287,8 @@ class GMS:
                 for criterion in ["gini", "entropy"]:
                     self.RandomForest(estimators, criterion)
         
-        
-    '''Runs GenerateModel method with different type of models and saves highest acc. model to memory'''
+    
+    
     def Run(self):
         '''Preprocess dataset'''
         self.Preprocess()
@@ -268,36 +301,7 @@ class GMS:
         self.GenerateModels("DecisionTree")
         self.GenerateModels("RandomForest")
         
-        '''Save best model to memory'''
-        self.SaveModelTo(self.userName + self.modelName + ".txt")
-        
-        
-        '''Save the bestModel path to database'''
-        
-        oldPost = self.modeldetails.find_one({"username":  self.userName })
-        
-        catCols = []
-        for catColIndex in self.categoricalcolumns:
-            catCols.append(dict({ "name": self.columns[catColIndex], "values": sorted(pd.unique(self.data_frame.iloc[:, catColIndex].values).tolist()) }))
-        
-        numCols = []
-        for numColIndex in self.numericalcolumns:
-            numCols.append(self.columns[numColIndex])
-            
-        targetCol = dict({ "name": self.columns[self.target], "values": sorted(pd.unique(self.data_frame.iloc[:, self.target].values).tolist()) })
-        
-        newModel = {"modelname": self.modelName, "catCols": catCols , "numCols": numCols, "targetCol": targetCol, "algorithm": self.algorithm, "accuracy": self.maxScore}
-        
-        if oldPost is None:
-            '''User doesn't have any model previously '''
-            oldPost = {"username": self.userName, "models": [dict(newModel)]}
-        else:
-            '''User has at least one model before '''
-            prevModels = oldPost["models"]
-            prevModels.append(dict(newModel))
-            oldPost["models"] = prevModels
-        
-        
-        self.modeldetails.update_one({"username": self.userName}, {"$set": dict(oldPost)}, upsert=True)
+        ''' Save the best model '''
+        self.Save()
         
         print("GMS Finished.")
