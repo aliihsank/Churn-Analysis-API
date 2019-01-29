@@ -1,4 +1,8 @@
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
+
 from sklearn.model_selection import train_test_split
+
+from sklearn.metrics import accuracy_score
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
@@ -7,9 +11,9 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
-
-from sklearn.metrics import accuracy_score
+import keras
+from keras.models import Sequential
+from keras.layers import Dense
 
 import pandas as pd
 import numpy as np
@@ -26,6 +30,8 @@ class GMS:
     userName = ""
     modelName = ""
     algorithm = ""
+    dburi = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
+        
     
     def __init__(self, username, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns):
         self.name = ''
@@ -37,8 +43,7 @@ class GMS:
         self.categoricalcolumns = categoricalcolumns
         self.numericalcolumns = numericalcolumns
         
-        self.uri = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
-        self.client = pymongo.MongoClient(self.uri, ssl=True)
+        self.client = pymongo.MongoClient(self.dburi, ssl=True)
         self.db = self.client.churndb
         self.modeldetails = self.db.modeldetails
         
@@ -77,21 +82,39 @@ class GMS:
     '''Encoding categorical data'''
     def EncodeCategoricalVars(self):
         feature_list = []
-        i = 0
-        for col in self.categoricalcolumns:
-            labelEncoder = LabelEncoder()
-            self.X[:, i] = labelEncoder.fit_transform(self.X[:, i])
+        numOfUniqueValsForCatCols = []
+        
+        #Check if there is categorical variable
+        if len(self.categoricalcolumns) != 0:
+            numOfUniqueValsForCatCols.append(0)
+        
+            i = 0
+            for col in self.categoricalcolumns:
+                numOfUniqueVals = len(pd.unique(self.X[:, i]).tolist())
+                
+                ''' save number of unique vals for every categorical column '''
+                numOfUniqueValsForCatCols.append(numOfUniqueValsForCatCols[-1] + numOfUniqueVals)
+                
+                labelEncoder = LabelEncoder()
+                self.X[:, i] = labelEncoder.fit_transform(self.X[:, i])
+                
+                ''' if there are more than 2 classes then use OHE on it '''
+                if(numOfUniqueVals > 2): 
+                    feature_list.append(i)
+                i += 1
             
-            if(len(pd.unique(self.X[:, i]).tolist()) > 2):
-                feature_list.append(i)
-            i += 1
+            del numOfUniqueValsForCatCols[-1]
+            
+            oneHotEncoder = OneHotEncoder(categorical_features = feature_list)
+            self.X = oneHotEncoder.fit_transform(self.X).toarray()
+            
+            '''Remove dummy variable'''
+            for row in self.X:
+                for colIndex in numOfUniqueValsForCatCols:
+                    del row[colIndex]
+            
         
-        
-        oneHotEncoder = OneHotEncoder(categorical_features = feature_list)
-        self.X = oneHotEncoder.fit_transform(self.X).toarray()
-        
-        '''Remove dummy variable'''
-        self.X = self.X[:, 1:]
+    
     
     def LogisticRegression(self):
         classifier = LogisticRegression(random_state = 0)
@@ -175,11 +198,38 @@ class GMS:
             self.bestModel = classifier
             self.maxScore = accuracy
             self.algorithm = "Random Forest"
+            
+            
+    def ArtificialNeuralNetwork(self):
+        """
+        # Initialising the ANN
+        classifier = Sequential()
+        
+        # Adding the input layer and the first hidden layer
+        classifier.add(Dense(output_dim = 6, init = 'uniform', activation = 'relu', input_dim = 11))
+        
+        # Adding the second hidden layer
+        classifier.add(Dense(output_dim = 6, init = 'uniform', activation = 'relu'))
+        
+        # Adding the output layer
+        classifier.add(Dense(output_dim = 1, init = 'uniform', activation = 'sigmoid'))
+        
+        # Compiling the ANN
+        classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+        
+        # Fitting the ANN to the Training set
+        classifier.fit(X_train, y_train, batch_size = 10, nb_epoch = 100)
+                
+        # Predicting the Test set results
+        y_pred = classifier.predict(X_test)
+        y_pred = (y_pred > 0.5)
+        """
+        
 
 
     '''Generates given model type with different parameters and assigns highest acc. model'''
     def GenerateModels(self, modelType):        
-        '''Genel -> Train-Test Size'''
+        '''General -> Train-Test Size'''
         '''KNN -> neighbournum, metric, p'''
         '''KernelSVM -> kernel'''
         '''DecisionTree -> criterion'''
