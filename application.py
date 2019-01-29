@@ -47,7 +47,18 @@ def ValidateUserPlan(username, requestedMethod):
     return True
     
         
+def LoadScalerFrom(scalerPath):
+    try:
+        s3 = boto3.resource("s3").Bucket("churn-bucket")
         
+        scaler = pickle.loads(s3.Object(key=scalerPath).get()["Body"].read())
+        
+    except Exception as e:
+                print("Error in scaler loading:" + e)
+    
+    return scaler
+
+
 def LoadModelFrom(modelPath):
     try:
         s3 = boto3.resource("s3").Bucket("churn-bucket")
@@ -191,8 +202,8 @@ class Predict(Resource):
             model = LoadModelFrom(username + modelname + ".txt")
         
             #Feature Scaling (predictset comes onehotencoded)
-            ss = StandardScaler()
-            predictset = ss.fit_transform(predictset)
+            ss = LoadScalerFrom(username + modelname + "scaler.txt")
+            predictset = ss.transform(predictset)
             
             #Make prediction
             result = model.predict(predictset).tolist()
