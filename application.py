@@ -149,7 +149,6 @@ class Train(Resource):
                 run = Thread(target = gms.Run, args = ())
                 run.start()
             except Exception as e:
-                print("Hata Oluştu !!" + str(e))
                 return {'error': 'An error occured !! ' + str(e)}
             
             return {'info': 'training started !'}
@@ -172,7 +171,7 @@ class ModelList(Resource):
                 return {"error": "User doesn't have any model"}
             else:
                 post = db.modeldetails.find_one({"username": username}, {'_id': 0})
-                return post["models"]
+                return {"models": post["models"]}
         else:
             return {"error": "User doesn't exist"}
         
