@@ -31,7 +31,7 @@ class GMS:
     modelName = ""
     algorithm = ""
     dburi = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
-        
+    
     
     def __init__(self, username, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns):
         self.name = ''
@@ -46,15 +46,18 @@ class GMS:
         self.client = pymongo.MongoClient(self.dburi, ssl=True)
         self.db = self.client.churndb
         self.modeldetails = self.db.modeldetails
+        self.ss = StandardScaler()
         
     
     def SaveModel(self):
         '''Save best model to memory'''
-        self.SaveModelTo(self.userName + self.modelName + ".txt")
-        
+        self.SaveModelToMemory()
         
         '''Save the bestModel path to database'''
+        self.SaveModelToDB()
         
+    
+    def SaveModelToDB(self):
         oldPost = self.modeldetails.find_one({"username":  self.userName })
         
         catCols = []
@@ -83,14 +86,18 @@ class GMS:
         
     
 
-    def SaveModelTo(self, modelPath):
+    def SaveModelToMemory(self, modelPath):
+        modelPath = self.userName + self.modelName + ".txt"
+        scalerPath = self.userName + self.modelName + "scaler.txt"
         s3 = boto3.resource('s3')
         
         bucket_name = 'churn-bucket'
         
         modelInBytes = pickle.dumps(self.bestModel)
+        scalerInBytes = pickle.dumps(self.ss)
  
         s3.meta.client.put_object(Body=modelInBytes, Bucket=bucket_name, Key=modelPath)
+        s3.meta.client.put_object(Body=scalerInBytes, Bucket=bucket_name, Key=scalerPath)
         
 
 
@@ -108,9 +115,8 @@ class GMS:
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size = .25, random_state = 0)
         
         '''Scale vars '''
-        ss = StandardScaler()
-        self.X_train = ss.fit_transform(self.X_train)
-        self.X_test = ss.transform(self.X_test)
+        self.X_train = self.ss.fit_transform(self.X_train)
+        self.X_test = self.ss.transform(self.X_test)
     
     
     '''Encoding categorical data'''
