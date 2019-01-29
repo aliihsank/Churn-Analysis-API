@@ -126,18 +126,19 @@ class GMS:
             for col in self.categoricalcolumns:
                 numOfUniqueVals = len(pd.unique(self.X[:, i]).tolist())
                 
-                ''' save number of unique vals for every categorical column '''
-                numOfUniqueValsForCatCols.append(numOfUniqueValsForCatCols[-1] + numOfUniqueVals)
-                
                 labelEncoder = LabelEncoder()
                 self.X[:, i] = labelEncoder.fit_transform(self.X[:, i])
                 
                 ''' if there are more than 2 classes then use OHE on it '''
                 if(numOfUniqueVals > 2): 
                     feature_list.append(i)
+                    ''' save number of unique vals for every categorical column '''
+                    numOfUniqueValsForCatCols.append(numOfUniqueValsForCatCols[-1] + numOfUniqueVals)
                 i += 1
             
-            del numOfUniqueValsForCatCols[-1]
+            #Remove last index(no need)
+            if(numOfUniqueVals > 2): 
+                del numOfUniqueValsForCatCols[-1]
             
             oneHotEncoder = OneHotEncoder(categorical_features = feature_list)
             self.X = oneHotEncoder.fit_transform(self.X).toarray()
