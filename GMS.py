@@ -86,7 +86,7 @@ class GMS:
         
     
 
-    def SaveModelToMemory(self, modelPath):
+    def SaveModelToMemory(self):
         modelPath = self.userName + self.modelName + ".txt"
         scalerPath = self.userName + self.modelName + "scaler.txt"
         s3 = boto3.resource('s3')
