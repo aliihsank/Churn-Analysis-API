@@ -1,19 +1,10 @@
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
+from flask import Flask, request
+from flask_cors import CORS
+from flask_restful import Resource, Api
 
-from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
-from sklearn.metrics import accuracy_score
-
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-
-import keras
-from keras.models import Sequential
-from keras.layers import Dense
+from threading import Thread
 
 import pandas as pd
 import numpy as np
@@ -22,287 +13,207 @@ import pickle
 import pymongo
 import boto3
 
+from GMS import GMS
 
-class GMS:
+dburi = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
+
+
+app = Flask(__name__)
+api = Api(app)
+CORS(app)
+
+
+
+def MakeValidations(username, password, requestedMethod):
+    if (ValidateUser(username, password)):
+        if(ValidateUserPlan(username, requestedMethod)):
+            return True
     
-    maxScore = 0
-    bestModel = ""
-    userName = ""
-    modelName = ""
-    algorithm = ""
-    dburi = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
-        
+    return False
+
+
+def ValidateUser(username, password):
     
-    def __init__(self, username, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns):
-        self.name = ''
-        self.userName = username
-        self.modelName = modelname
-        self.dataset = dataset
-        self.columns = columns
-        self.target = target
-        self.categoricalcolumns = categoricalcolumns
-        self.numericalcolumns = numericalcolumns
-        
-        self.client = pymongo.MongoClient(self.dburi, ssl=True)
-        self.db = self.client.churndb
-        self.modeldetails = self.db.modeldetails
-        
-    
-    def SaveModel(self):
-        '''Save best model to memory'''
-        self.SaveModelTo(self.userName + self.modelName + ".txt")
-        
-        
-        '''Save the bestModel path to database'''
-        
-        oldPost = self.modeldetails.find_one({"username":  self.userName })
-        
-        catCols = []
-        for catColIndex in self.categoricalcolumns:
-            catCols.append(dict({ "name": self.columns[catColIndex], "values": sorted(pd.unique(self.data_frame.iloc[:, catColIndex].values).tolist()) }))
-        
-        numCols = []
-        for numColIndex in self.numericalcolumns:
-            numCols.append(self.columns[numColIndex])
+    client = pymongo.MongoClient(dburi, ssl=True)
+    db = client.churndb
             
-        targetCol = dict({ "name": self.columns[self.target], "values": sorted(pd.unique(self.data_frame.iloc[:, self.target].values).tolist()) })
+    if db.userdetails.find_one({"username": username, "password": password}) is None:
+        return False
+    else:
+        return True
+    
+    
+def ValidateUserPlan(username, requestedMethod):
+    return True
+    
         
-        newModel = {"modelname": self.modelName, "catCols": catCols , "numCols": numCols, "targetCol": targetCol, "algorithm": self.algorithm, "accuracy": self.maxScore}
         
-        if oldPost is None:
-            '''User doesn't have any model previously '''
-            oldPost = {"username": self.userName, "models": [dict(newModel)]}
+def LoadModelFrom(modelPath):
+    try:
+        s3 = boto3.resource("s3").Bucket("churn-bucket")
+        
+        loaded_model = pickle.loads(s3.Object(key=modelPath).get()["Body"].read())
+        
+    except Exception as e:
+                print("Error in model loading:" + e)
+    
+    return loaded_model
+    
+
+class Test(Resource):
+    def get(self):
+        return {'Test Message': "Hello User"}
+    
+
+class Register(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        email = data["email"]
+        username = data["username"]
+        password = data["password"]
+        
+        if email is None or username is None or password is None:
+            return {'info': '0'}
         else:
-            '''User has at least one model before '''
-            prevModels = oldPost["models"]
-            prevModels.append(dict(newModel))
-            oldPost["models"] = prevModels
-        
-        
-        self.modeldetails.update_one({"username": self.userName}, {"$set": dict(oldPost)}, upsert=True)
-        
-    
-
-    def SaveModelTo(self, modelPath):
-        s3 = boto3.resource('s3')
-        
-        bucket_name = 'churn-bucket'
-        
-        modelInBytes = pickle.dumps(self.bestModel)
- 
-        s3.meta.client.put_object(Body=modelInBytes, Bucket=bucket_name, Key=modelPath)
-        
-
-
-    def Preprocess(self):
-        '''Make dataset a dataframe '''
-        self.data_frame = pd.DataFrame(self.dataset, columns = self.columns)
-        
-        '''Assign columns'''
-        self.X = self.data_frame.iloc[:, (self.categoricalcolumns + self.numericalcolumns)].values
-        self.y = self.data_frame.iloc[:, self.target].values
-
-        '''Encode categorical vars '''
-        self.EncodeCategoricalVars()
-        
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size = .25, random_state = 0)
-        
-        '''Scale vars '''
-        ss = StandardScaler()
-        self.X_train = ss.fit_transform(self.X_train)
-        self.X_test = ss.transform(self.X_test)
+            client = pymongo.MongoClient(dburi, ssl=True)
+            db = client.churndb
+            
+            post = { "email":email, "username": username, "password":password }
+            db.userdetails.insert_one(post)
+            return {'info': '1'}
     
     
-    '''Encoding categorical data'''
-    def EncodeCategoricalVars(self):
-        feature_list = []
-        numOfUniqueValsForCatCols = []
+class Login(Resource):
+    def post(self):
+        data = request.get_json()
         
-        #Check if there is categorical variable
-        if len(self.categoricalcolumns) != 0:
-            numOfUniqueValsForCatCols.append(0)
+        username = data["username"]
+        password = data["password"]
+
+        client = pymongo.MongoClient(dburi, ssl=True)
+        db = client.churndb
         
-            i = 0
-            for col in self.categoricalcolumns:
-                numOfUniqueVals = len(pd.unique(self.X[:, i]).tolist())
+        if db.userdetails.find_one({"username": username, "password": password}) is None:
+            return {'info': '0'}
+        else:
+            return {'info': '1'}
+    
+
+
+class ColumnsInfos(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        username = data["username"]
+        password = data["password"]
+        columns = data["columns"]
+        dataset = data["dataset"]
+        
+        if(MakeValidations(username, password, 'columnsinfos')):
+            data_frame = pd.DataFrame(dataset, columns = columns)
+            data_frame = data_frame[columns].apply(pd.to_numeric, errors="ignore")
+            
+            result = []
+            
+            for i in range(len(columns)):
+                cat = 0
+                if(data_frame.iloc[:,[i]].values.dtype is np.dtype("object")):
+                    cat = 1
+                num = len(set(data_frame.iloc[:,i]))
                 
-                labelEncoder = LabelEncoder()
-                self.X[:, i] = labelEncoder.fit_transform(self.X[:, i])
+                result.append({"name": columns[i] , "number": num, "cat": cat })
+            
+            return {'colInfos': result}
+        else:
+            return {'error': 'User is not registered !'}
+        
+
+class Train(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        username = data["username"]
+        password = data["password"]
+        modelname = data["modelname"]
+        dataset = data["dataset"]
+        columns = data["columns"]
+        target = data["target"]
+        categoricalcolumns = data["categoricalcolumns"]
+        numericalcolumns = data["numericalcolumns"]
+        
+        if(MakeValidations(username, password, 'train')):
+            try:
+                gms = GMS(username, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns)
                 
-                ''' if there are more than 2 classes then use OHE on it '''
-                if(numOfUniqueVals > 2): 
-                    feature_list.append(i)
-                    ''' save number of unique vals for every categorical column '''
-                    numOfUniqueValsForCatCols.append(numOfUniqueValsForCatCols[-1] + numOfUniqueVals)
-                i += 1
+                run = Thread(target = gms.Run, args = ())
+                run.start()
+            except Exception as e:
+                return {'error': 'An error occured !! ' + str(e)}
             
-            #Remove last index(no need)
-            if(numOfUniqueVals > 2): 
-                del numOfUniqueValsForCatCols[-1]
+            return {'info': 'training started !'}
+        else:
+            return {'error': 'User is not registered !'}
+        
+        
+class ModelList(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        username = data["username"]
+        password = data["password"]
+        
+        if(MakeValidations(username, password, 'modellist')):
+            client = pymongo.MongoClient(dburi, ssl=True)
+            db = client.churndb
             
-            oneHotEncoder = OneHotEncoder(categorical_features = feature_list)
-            self.X = oneHotEncoder.fit_transform(self.X).toarray()
+            if db.modeldetails.find_one({"username": username}, {'_id': 0}) is None:
+                return {"error": "User doesn't have any model"}
+            else:
+                post = db.modeldetails.find_one({"username": username}, {'_id': 0})
+                return {"models": post["models"]}
+        else:
+            return {"error": "User doesn't exist"}
+        
+        
+class Predict(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        username = data["username"]
+        password = data["password"]
+        modelname = data["modelname"]
+        predictset = data["predictset"]
+        
+        #Load Model
+        if(MakeValidations(username, password, 'predict')):
+            #Load Model
+            model = LoadModelFrom(username + modelname + ".txt")
+        
+            #Feature Scaling (predictset comes onehotencoded)
+            ss = StandardScaler()
+            predictset = ss.fit_transform(predictset)
             
-            '''Remove dummy variable'''
-            for index in numOfUniqueValsForCatCols:
-                self.X = np.delete(self.X, index, 1)
+            #Make prediction
+            result = model.predict(predictset).tolist()
+            #Return result
+            return {'prediction': result}
+            
+        else:
+            return {"error": "User doesn't exist"}
             
         
+        
+        
+api.add_resource(ColumnsInfos, '/columnsInfos')
+api.add_resource(Train, '/train')
+api.add_resource(Test, '/test')
+api.add_resource(Register, '/register')
+api.add_resource(Login, '/login')
+api.add_resource(ModelList, '/modelList')
+api.add_resource(Predict, '/predict')
+
+if __name__ == '__main__':
+    app.run()
     
     
-    def LogisticRegression(self):
-        classifier = LogisticRegression(random_state = 0)
-        classifier.fit(self.X_train, self.y_train)
-        
-        y_predict = classifier.predict(self.X_test)
-        
-        accuracy = accuracy_score(self.y_test, y_predict)
-        
-        if(accuracy > self.maxScore):
-            self.bestModel = classifier
-            self.maxScore = accuracy
-            self.algorithm = "Logistic Regression"
-            
-        
-    def KNN(self, pnumofneighbour, pmetric, pp):
-        classifier = KNeighborsClassifier(n_neighbors = pnumofneighbour, metric = pmetric, p = pp)
-        classifier.fit(self.X_train, self.y_train)
-        
-        y_predict = classifier.predict(self.X_test)
-        
-        accuracy = accuracy_score(self.y_test, y_predict)
-        
-        if(accuracy > self.maxScore):
-            self.bestModel = classifier
-            self.maxScore = accuracy
-            self.algorithm = "KNN"
-       
-        
-    def NaiveBayes(self):
-        classifier = GaussianNB()
-        classifier.fit(self.X_train, self.y_train)
-        
-        y_predict = classifier.predict(self.X_test)
-        
-        accuracy = accuracy_score(self.y_test, y_predict)
-        
-        if(accuracy > self.maxScore):
-            self.bestModel = classifier
-            self.maxScore = accuracy
-            self.algorithm = "Naive Bayes"
-        
-        
-    def KernelSVM(self, pkernel):
-        classifier = SVC(kernel = pkernel, random_state = 0)
-        classifier.fit(self.X_train, self.y_train)
-        
-        y_predict = classifier.predict(self.X_test)
-        
-        accuracy = accuracy_score(self.y_test, y_predict)
-        
-        if(accuracy > self.maxScore):
-            self.bestModel = classifier
-            self.maxScore = accuracy
-            self.algorithm = "Kernel SVM"
-            
-
-    def DecisionTree(self, pcriterion):
-        classifier = DecisionTreeClassifier(criterion = pcriterion, random_state = 0)
-        classifier.fit(self.X_train, self.y_train)
-        
-        y_predict = classifier.predict(self.X_test)
-        
-        accuracy = accuracy_score(self.y_test, y_predict)
-        
-        if(accuracy > self.maxScore):
-            self.bestModel = classifier
-            self.maxScore = accuracy
-            self.algorithm = "Decision Tree"
-
-
-    def RandomForest(self, pestimators, pcriterion):
-        classifier = RandomForestClassifier(n_estimators = pestimators, criterion = pcriterion, random_state = 0)
-        classifier.fit(self.X_train, self.y_train)
-        
-        y_predict = classifier.predict(self.X_test)
-        
-        accuracy = accuracy_score(self.y_test, y_predict)
-        
-        if(accuracy > self.maxScore):
-            self.bestModel = classifier
-            self.maxScore = accuracy
-            self.algorithm = "Random Forest"
-            
-            
-    def ArtificialNeuralNetwork(self):
-        """
-        # Initialising the ANN
-        classifier = Sequential()
-        
-        # Adding the input layer and the first hidden layer
-        classifier.add(Dense(output_dim = 6, init = 'uniform', activation = 'relu', input_dim = 11))
-        
-        # Adding the second hidden layer
-        classifier.add(Dense(output_dim = 6, init = 'uniform', activation = 'relu'))
-        
-        # Adding the output layer
-        classifier.add(Dense(output_dim = 1, init = 'uniform', activation = 'sigmoid'))
-        
-        # Compiling the ANN
-        classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
-        
-        # Fitting the ANN to the Training set
-        classifier.fit(X_train, y_train, batch_size = 10, nb_epoch = 100)
-                
-        # Predicting the Test set results
-        y_pred = classifier.predict(X_test)
-        y_pred = (y_pred > 0.5)
-        """
-        
-
-
-    '''Generates given model type with different parameters and assigns highest acc. model'''
-    def GenerateModels(self, modelType):        
-        '''General -> Train-Test Size'''
-        '''KNN -> neighbournum, metric, p'''
-        '''KernelSVM -> kernel'''
-        '''DecisionTree -> criterion'''
-        '''RandomForest -> estimators, criterion'''
-        if(modelType == "LogisticRegression"):
-            self.LogisticRegression()
-        elif(modelType == "KNN"):
-            for numofneighbour in range(3,7):
-                for p in range(1,5):
-                    for metric in ["minkowski"]:
-                        self.KNN(numofneighbour, metric, p)        
-        elif(modelType == "NaiveBayes"):
-            self.NaiveBayes()
-        elif(modelType == "KernelSVM"):
-            for kernel in ["linear", "poly", "rbf", "sigmoid"]:
-                self.KernelSVM(kernel)
-        elif(modelType == "DecisionTree"):
-            for criterion in ["gini", "entropy"]:
-                self.DecisionTree(criterion)
-        elif(modelType == "RandomForest"):
-            for estimators in range(8,14):
-                for criterion in ["gini", "entropy"]:
-                    self.RandomForest(estimators, criterion)
-        
-    
-    
-    def Run(self):
-        '''Preprocess dataset'''
-        self.Preprocess()
-        
-        '''Create models, find best model'''
-        self.GenerateModels("LogisticRegression")
-        self.GenerateModels("KNN")
-        self.GenerateModels("NaiveBayes")
-        self.GenerateModels("KernelSVM")
-        self.GenerateModels("DecisionTree")
-        self.GenerateModels("RandomForest")
-        
-        ''' Save the best model '''
-        self.SaveModel()
-        
-        print("GMS Finished.")
