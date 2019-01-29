@@ -302,6 +302,6 @@ class GMS:
         self.GenerateModels("RandomForest")
         
         ''' Save the best model '''
-        self.Save()
+        self.SaveModel()
         
         print("GMS Finished.")
