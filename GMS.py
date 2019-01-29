@@ -118,6 +118,7 @@ class GMS:
         feature_list = []
         numOfUniqueValsForCatCols = []
         hasMulticlassCat = False
+        indexZeroAdded = False
         
         #Check if there is categorical variable
         if len(self.categoricalcolumns) != 0:
@@ -131,6 +132,9 @@ class GMS:
                 ''' if there are more than 2 classes then use OHE on it '''
                 if(numOfUniqueVals > 2): 
                     feature_list.append(i)
+                    if(not indexZeroAdded):
+                        numOfUniqueValsForCatCols.append(0)
+                        indexZeroAdded = True
                     ''' save number of unique vals for every categorical column '''
                     numOfUniqueValsForCatCols.append(numOfUniqueValsForCatCols[-1] + numOfUniqueVals)
                     hasMulticlassCat = True
