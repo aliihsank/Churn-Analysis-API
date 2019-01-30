@@ -162,7 +162,8 @@ class Train(Resource):
             
             modelnameExists = False
             for model in db.modeldetails.find_one({"username": username }):
-                if(modelname == model["modelname"]):
+                print(model)
+                if(modelname == model[0]):
                     modelnameExists = True
             if modelnameExists:
                 return {'error': 'modelname already exists'}
