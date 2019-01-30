@@ -162,6 +162,8 @@ class Train(Resource):
             
             modelnameExists = False
             usermodels = db.modeldetails.find_one({"username": username })
+            print(usermodels)
+            print(usermodels[0])
             for model in usermodels["models"]:
                 print(model["modelname"])
                 if(modelname == model["models"]):
