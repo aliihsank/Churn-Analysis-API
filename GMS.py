@@ -116,7 +116,7 @@ class GMS:
         
         ''' Encode y column '''
         labelEncoder = LabelEncoder()
-        self.y[0] = labelEncoder.fit_transform(self.y[0])
+        self.y = labelEncoder.fit_transform(self.y)
         
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size = .25, random_state = 0)
         
