@@ -109,6 +109,7 @@ class GMS:
         '''Assign columns'''
         self.X = self.data_frame.iloc[:, (self.categoricalcolumns + self.numericalcolumns)].values
         self.y = self.data_frame.iloc[:, self.target].values
+        print(self.y)
 
         '''Encode categorical vars '''
         self.EncodeCategoricalVars()
