@@ -161,10 +161,9 @@ class Train(Resource):
             db = client.churndb
             
             modelnameExists = False
-            usermodels = db.modeldetails.find_one({"username": username })
-            print(usermodels)
-            print(usermodels[0])
-            for model in usermodels["models"]:
+            usermodelsInfo = db.modeldetails.find_one({"username": username })
+            print(usermodelsInfo.models)
+            for model in usermodelsInfo["models"]:
                 print(model["modelname"])
                 if(modelname == model["models"]):
                     modelnameExists = True
