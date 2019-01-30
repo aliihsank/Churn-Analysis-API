@@ -160,18 +160,21 @@ class Train(Resource):
             client = pymongo.MongoClient(dburi, ssl=True)
             db = client.churndb
             
-            if db.modeldetails.find_one({"username": username, "modelname": modelname}) is None:
+            modelnameExists = False
+            for model in db.modeldetails.find_one({"username": username }):
+                if(modelname == model["modelname"]):
+                    modelnameExists = True
+            if modelnameExists:
+                return {'error': 'modelname already exists'}
+            else:
                 try:
                     gms = GMS(username, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns)
                     
                     run = Thread(target = gms.Run, args = ())
                     run.start()
+                    return {'info': 'training started !'}
                 except Exception as e:
                     return {'error': 'An error occured !! ' + str(e)}
-                
-                return {'info': 'training started !'}
-            else:
-                return {'error': 'modelname already exists'}
         else:
             return {'error': 'User is not registered !'}
         
