@@ -109,7 +109,6 @@ class GMS:
         '''Assign columns'''
         self.X = self.data_frame.iloc[:, (self.categoricalcolumns + self.numericalcolumns)].values
         self.y = self.data_frame.iloc[:, self.target].values
-        print(self.y)
 
         '''Encode categorical vars '''
         self.EncodeCategoricalVars()
@@ -270,15 +269,13 @@ class GMS:
         classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
         
         # Fitting the ANN to the Training set
-        classifier.fit(self.X_train, self.y_train, batch_size = 10, nb_epoch = 100)
+        classifier.fit(self.X_train, self.y_train, batch_size = 10, nb_epoch = 50)
                 
         # Predicting the Test set results
         y_predict = classifier.predict(self.X_test)
         y_predict = (y_predict > 0.5)
-        print("y_predict:")
-        print(y_predict)
+        
         accuracy = accuracy_score(self.y_test, y_predict)
-        print("acc:" + accuracy)
         
         if(accuracy > self.maxScore):
             self.bestModel = classifier
