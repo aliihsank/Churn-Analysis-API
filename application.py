@@ -90,9 +90,12 @@ class Register(Resource):
             client = pymongo.MongoClient(dburi, ssl=True)
             db = client.churndb
             
-            post = { "email":email, "username": username, "password":password }
-            db.userdetails.insert_one(post)
-            return {'info': '1'}
+            if db.userdetails.find_one({"username": username}) is None:
+                return {'info': '0'}
+            else:
+                post = { "email":email, "username": username, "password":password }
+                db.userdetails.insert_one(post)
+                return {'info': '1'}
     
     
 class Login(Resource):
@@ -154,15 +157,21 @@ class Train(Resource):
         numericalcolumns = data["numericalcolumns"]
         
         if(MakeValidations(username, password, 'train')):
-            try:
-                gms = GMS(username, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns)
-                
-                run = Thread(target = gms.Run, args = ())
-                run.start()
-            except Exception as e:
-                return {'error': 'An error occured !! ' + str(e)}
+            client = pymongo.MongoClient(dburi, ssl=True)
+            db = client.churndb
             
-            return {'info': 'training started !'}
+            if db.modeldetails.find_one({"username": username, "modelname": modelname}) is None:
+                return {'error': 'modelname already exists'}
+            else:
+                try:
+                    gms = GMS(username, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns)
+                    
+                    run = Thread(target = gms.Run, args = ())
+                    run.start()
+                except Exception as e:
+                    return {'error': 'An error occured !! ' + str(e)}
+                
+                return {'info': 'training started !'}
         else:
             return {'error': 'User is not registered !'}
         
