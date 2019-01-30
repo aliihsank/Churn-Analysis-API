@@ -245,12 +245,14 @@ class GMS:
             
             
     def ArtificialNeuralNetwork(self):
-        """
+        
+        numOfCols = len(self.X[0])
+        
         # Initialising the ANN
         classifier = Sequential()
         
         # Adding the input layer and the first hidden layer
-        classifier.add(Dense(output_dim = 6, init = 'uniform', activation = 'relu', input_dim = 11))
+        classifier.add(Dense(output_dim = 6, init = 'uniform', activation = 'relu', input_dim = numOfCols))
         
         # Adding the second hidden layer
         classifier.add(Dense(output_dim = 6, init = 'uniform', activation = 'relu'))
@@ -262,13 +264,18 @@ class GMS:
         classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
         
         # Fitting the ANN to the Training set
-        classifier.fit(X_train, y_train, batch_size = 10, nb_epoch = 100)
+        classifier.fit(self.X_train, self.y_train, batch_size = 10, nb_epoch = 100)
                 
         # Predicting the Test set results
-        y_pred = classifier.predict(X_test)
-        y_pred = (y_pred > 0.5)
-        """
+        y_predict = classifier.predict(self.X_test)
+        y_predict = (y_predict > 0.5)
         
+        accuracy = accuracy_score(self.y_test, y_predict)
+
+        if(accuracy > self.maxScore):
+            self.bestModel = classifier
+            self.maxScore = accuracy
+            self.algorithm = "Artificial Neural Network"
 
 
     '''Generates given model type with different parameters and assigns highest acc. model'''
@@ -297,7 +304,8 @@ class GMS:
             for estimators in range(8,14):
                 for criterion in ["gini", "entropy"]:
                     self.RandomForest(estimators, criterion)
-        
+        elif(modelType == "ArtificialNeuralNetwork"):
+            self.ArtificialNeuralNetwork()
     
     
     def Run(self):
@@ -311,6 +319,7 @@ class GMS:
         self.GenerateModels("KernelSVM")
         self.GenerateModels("DecisionTree")
         self.GenerateModels("RandomForest")
+        self.GenerateModels("ArtificialNeuralNetwork")
         
         ''' Save the best model '''
         self.SaveModel()
