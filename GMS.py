@@ -104,6 +104,7 @@ class GMS:
     def Preprocess(self):
         '''Make dataset a dataframe '''
         self.data_frame = pd.DataFrame(self.dataset, columns = self.columns)
+        self.data_frame = self.data_frame[self.columns].apply(pd.to_numeric, errors="ignore")
         
         '''Assign columns'''
         self.X = self.data_frame.iloc[:, (self.categoricalcolumns + self.numericalcolumns)].values
