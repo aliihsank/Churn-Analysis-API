@@ -110,14 +110,14 @@ class GMS:
         self.X = self.data_frame.iloc[:, (self.categoricalcolumns + self.numericalcolumns)].values
         self.y = self.data_frame.iloc[:, self.target].values
         print(self.y)
-        print("shape: " + self.y.shape)
+        print("shape: " + np.shape(self.y))
 
         '''Encode categorical vars '''
         self.EncodeCategoricalVars()
         
         ''' Encode y column '''
         labelEncoder = LabelEncoder()
-        self.y[:, 0] = labelEncoder.fit_transform(self.y[:, 0])
+        self.y[0] = labelEncoder.fit_transform(self.y[0])
         
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size = .25, random_state = 0)
         
