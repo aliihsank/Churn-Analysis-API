@@ -113,6 +113,10 @@ class GMS:
         '''Encode categorical vars '''
         self.EncodeCategoricalVars()
         
+        ''' Encode y column '''
+        labelEncoder = LabelEncoder()
+        self.y[:, 0] = labelEncoder.fit_transform(self.y[:, 0])
+        
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size = .25, random_state = 0)
         
         '''Scale vars '''
@@ -270,9 +274,11 @@ class GMS:
         # Predicting the Test set results
         y_predict = classifier.predict(self.X_test)
         y_predict = (y_predict > 0.5)
-        
+        print("y_predict:")
+        print(y_predict)
         accuracy = accuracy_score(self.y_test, y_predict)
-
+        print("acc:" + accuracy)
+        
         if(accuracy > self.maxScore):
             self.bestModel = classifier
             self.maxScore = accuracy
