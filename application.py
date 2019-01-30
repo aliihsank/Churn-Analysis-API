@@ -91,11 +91,11 @@ class Register(Resource):
             db = client.churndb
             
             if db.userdetails.find_one({"username": username}) is None:
-                return {'info': '0'}
-            else:
                 post = { "email":email, "username": username, "password":password }
                 db.userdetails.insert_one(post)
                 return {'info': '1'}
+            else:
+                return {'info': '0'}
     
     
 class Login(Resource):
@@ -161,8 +161,6 @@ class Train(Resource):
             db = client.churndb
             
             if db.modeldetails.find_one({"username": username, "modelname": modelname}) is None:
-                return {'error': 'modelname already exists'}
-            else:
                 try:
                     gms = GMS(username, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns)
                     
@@ -172,6 +170,8 @@ class Train(Resource):
                     return {'error': 'An error occured !! ' + str(e)}
                 
                 return {'info': 'training started !'}
+            else:
+                return {'error': 'modelname already exists'}
         else:
             return {'error': 'User is not registered !'}
         
