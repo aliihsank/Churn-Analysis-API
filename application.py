@@ -162,7 +162,7 @@ class Train(Resource):
             
             modelnameExists = False
             for model in db.modeldetails.find_one({"username": username }):
-                print(model)
+                print(model[2])
                 if(modelname == model[0]):
                     modelnameExists = True
             if modelnameExists:
