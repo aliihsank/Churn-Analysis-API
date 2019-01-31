@@ -62,3 +62,11 @@ POST https://churn-analysis-api.herokuapp.com/train
 POST https://churn-analysis-api.herokuapp.com/predict
 
 POST https://churn-analysis-api.herokuapp.com/modelList
+
+
+### TODOs: ###
+- Visualisation of Results
+- Saving analysis and visualising old results (Analysis History)
+- Keep train logs (to keep track work of GMS model)
+- Handling Missing Values
+- Custom Model Selection (I know that)
