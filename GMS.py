@@ -106,6 +106,9 @@ class GMS:
         self.data_frame = pd.DataFrame(self.dataset, columns = self.columns)
         self.data_frame = self.data_frame[self.columns].apply(pd.to_numeric, errors="ignore")
         
+        print("Number of Rows:")
+        print(self.data_frame.shape)
+        
         '''Assign columns'''
         self.X = self.data_frame.iloc[:, (self.categoricalcolumns + self.numericalcolumns)].values
         self.y = self.data_frame.iloc[:, self.target].values
