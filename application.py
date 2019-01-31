@@ -152,37 +152,18 @@ class Train(Resource):
         categoricalcolumns = data["categoricalcolumns"]
         numericalcolumns = data["numericalcolumns"]
         
-        if(MakeValidations(username, password, 'train')):
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-                
-            modelnameExists = False
-            usermodelsInfo = db.modeldetails.find_one({"username": username })
-            if usermodelsInfo is not None:
-                for model in usermodelsInfo["models"]:
-                    if(modelname == model["modelname"]):
-                        modelnameExists = True
-            if modelnameExists:
-                return {'info': 0}
-            else:
-                gms = GMS(username, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns)
-                
-                run = Thread(target = gms.Run, args = ())
-                run.start()
-                return {'info': 1}
-        else:
-            return {'info': 0}
-        """
         try:
             if(MakeValidations(username, password, 'train')):
                 client = pymongo.MongoClient(dburi, ssl=True)
                 db = client.churndb
                 
+                print(dataset)
                 modelnameExists = False
                 usermodelsInfo = db.modeldetails.find_one({"username": username })
-                for model in usermodelsInfo["models"]:
-                    if(modelname == model["modelname"]):
-                        modelnameExists = True
+                if usermodelsInfo is not None:
+                    for model in usermodelsInfo["models"]:
+                        if(modelname == model["modelname"]):
+                            modelnameExists = True
                 if modelnameExists:
                     return {'info': 0}
                 else:
@@ -195,7 +176,7 @@ class Train(Resource):
                 return {'info': 0}
         except Exception as e:
             return {'info': -1, 'details': str(e)}
-        """
+        
         
 class ModelList(Resource):
     def post(self):
