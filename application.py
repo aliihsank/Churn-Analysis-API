@@ -157,7 +157,6 @@ class Train(Resource):
                 client = pymongo.MongoClient(dburi, ssl=True)
                 db = client.churndb
                 
-                print(dataset)
                 modelnameExists = False
                 usermodelsInfo = db.modeldetails.find_one({"username": username })
                 if usermodelsInfo is not None:
