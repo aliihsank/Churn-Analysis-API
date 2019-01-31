@@ -15,6 +15,7 @@ import boto3
 
 from GMS import GMS
 
+
 dburi = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
 
 
@@ -23,17 +24,14 @@ api = Api(app)
 CORS(app)
 
 
-
 def MakeValidations(username, password, requestedMethod):
     if (ValidateUser(username, password)):
         if(ValidateUserPlan(username, requestedMethod)):
             return True
-    
     return False
 
 
 def ValidateUser(username, password):
-    
     client = pymongo.MongoClient(dburi, ssl=True)
     db = client.churndb
             
@@ -48,25 +46,15 @@ def ValidateUserPlan(username, requestedMethod):
     
         
 def LoadScalerFrom(scalerPath):
-    try:
-        s3 = boto3.resource("s3").Bucket("churn-bucket")
-        
-        scaler = pickle.loads(s3.Object(key=scalerPath).get()["Body"].read())
-        
-    except Exception as e:
-                print("Error in scaler loading:" + e)
+    s3 = boto3.resource("s3").Bucket("churn-bucket")
+    scaler = pickle.loads(s3.Object(key=scalerPath).get()["Body"].read())
     
     return scaler
 
 
 def LoadModelFrom(modelPath):
-    try:
-        s3 = boto3.resource("s3").Bucket("churn-bucket")
-        
-        loaded_model = pickle.loads(s3.Object(key=modelPath).get()["Body"].read())
-        
-    except Exception as e:
-                print("Error in model loading:" + e)
+    s3 = boto3.resource("s3").Bucket("churn-bucket")
+    loaded_model = pickle.loads(s3.Object(key=modelPath).get()["Body"].read())
     
     return loaded_model
     
@@ -87,15 +75,18 @@ class Register(Resource):
         if email is None or username is None or password is None:
             return {'info': '0'}
         else:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-            
-            if db.userdetails.find_one({"username": username}) is None:
-                post = { "email":email, "username": username, "password":password }
-                db.userdetails.insert_one(post)
-                return {'info': '1'}
-            else:
-                return {'info': '0'}
+            try:
+                client = pymongo.MongoClient(dburi, ssl=True)
+                db = client.churndb
+                
+                if db.userdetails.find_one({"username": username}) is None:
+                    post = { "email":email, "username": username, "password":password }
+                    db.userdetails.insert_one(post)
+                    return {'info': 1}
+                else:
+                    return {'info': 0}
+            except Exception as e:
+                return {'info': -1, 'details': str(e)}
     
     
 class Login(Resource):
@@ -104,15 +95,17 @@ class Login(Resource):
         
         username = data["username"]
         password = data["password"]
-
-        client = pymongo.MongoClient(dburi, ssl=True)
-        db = client.churndb
         
-        if db.userdetails.find_one({"username": username, "password": password}) is None:
-            return {'info': '0'}
-        else:
-            return {'info': '1'}
-    
+        try:
+            client = pymongo.MongoClient(dburi, ssl=True)
+            db = client.churndb
+            
+            if db.userdetails.find_one({"username": username, "password": password}) is None:
+                return {'info': '0'}
+            else:
+                return {'info': '1'}
+        except Exception as e:
+            return {'info': -1, 'details': str(e)}
 
 
 class ColumnsInfos(Resource):
@@ -124,23 +117,26 @@ class ColumnsInfos(Resource):
         columns = data["columns"]
         dataset = data["dataset"]
         
-        if(MakeValidations(username, password, 'columnsinfos')):
-            data_frame = pd.DataFrame(dataset, columns = columns)
-            data_frame = data_frame[columns].apply(pd.to_numeric, errors="ignore")
-            
-            result = []
-            
-            for i in range(len(columns)):
-                cat = 0
-                if(data_frame.iloc[:,[i]].values.dtype is np.dtype("object")):
-                    cat = 1
-                num = len(set(data_frame.iloc[:,i]))
+        try:
+            if(MakeValidations(username, password, 'columnsinfos')):
+                data_frame = pd.DataFrame(dataset, columns = columns)
+                data_frame = data_frame[columns].apply(pd.to_numeric, errors="ignore")
                 
-                result.append({"name": columns[i] , "number": num, "cat": cat })
-            
-            return {'colInfos': result}
-        else:
-            return {'error': 'User is not registered !'}
+                result = []
+                
+                for i in range(len(columns)):
+                    cat = 0
+                    if(data_frame.iloc[:,[i]].values.dtype is np.dtype("object")):
+                        cat = 1
+                    num = len(set(data_frame.iloc[:,i]))
+                    
+                    result.append({"name": columns[i] , "number": num, "cat": cat })
+                
+                return {'info': 1, 'colInfos': result}
+            else:
+                return {'info': 0}
+        except Exception as e:
+            return {'info': -1, 'details': str(e)}
         
 
 class Train(Resource):
@@ -156,29 +152,28 @@ class Train(Resource):
         categoricalcolumns = data["categoricalcolumns"]
         numericalcolumns = data["numericalcolumns"]
         
-        if(MakeValidations(username, password, 'train')):
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-            
-            modelnameExists = False
-            usermodelsInfo = db.modeldetails.find_one({"username": username })
-            for model in usermodelsInfo["models"]:
-                print(model["modelname"])
-                if(modelname == model["modelname"]):
-                    modelnameExists = True
-            if modelnameExists:
-                return {'error': 'modelname already exists'}
-            else:
-                try:
+        try:
+            if(MakeValidations(username, password, 'train')):
+                client = pymongo.MongoClient(dburi, ssl=True)
+                db = client.churndb
+                
+                modelnameExists = False
+                usermodelsInfo = db.modeldetails.find_one({"username": username })
+                for model in usermodelsInfo["models"]:
+                    if(modelname == model["modelname"]):
+                        modelnameExists = True
+                if modelnameExists:
+                    return {'error': 'modelname already exists'}
+                else:
                     gms = GMS(username, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns)
-                    
+                        
                     run = Thread(target = gms.Run, args = ())
                     run.start()
-                    return {'info': 'training started !'}
-                except Exception as e:
-                    return {'error': 'An error occured !! ' + str(e)}
-        else:
-            return {'error': 'User is not registered !'}
+                    return {'info': 1}
+            else:
+                return {'info': 0}
+        except Exception as e:
+            return {'info': -1, 'details': str(e)}
         
         
 class ModelList(Resource):
@@ -188,18 +183,21 @@ class ModelList(Resource):
         username = data["username"]
         password = data["password"]
         
-        if(MakeValidations(username, password, 'modellist')):
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-            
-            if db.modeldetails.find_one({"username": username}, {'_id': 0}) is None:
-                return {"error": "User doesn't have any model"}
+        try:
+            if(MakeValidations(username, password, 'modellist')):
+                client = pymongo.MongoClient(dburi, ssl=True)
+                db = client.churndb
+                
+                if db.modeldetails.find_one({"username": username}, {'_id': 0}) is None:
+                    return {"error": "User doesn't have any model"}
+                else:
+                    post = db.modeldetails.find_one({"username": username}, {'_id': 0})
+                    return {"info": 1, "models": post["models"]}
             else:
-                post = db.modeldetails.find_one({"username": username}, {'_id': 0})
-                return {"models": post["models"]}
-        else:
-            return {"error": "User doesn't exist"}
-        
+                return {"info": 0}
+        except Exception as e:
+            return {'info': -1, 'details': str(e)}        
+
         
 class Predict(Resource):
     def post(self):
@@ -210,23 +208,24 @@ class Predict(Resource):
         modelname = data["modelname"]
         predictset = data["predictset"]
         
-        #Load Model
-        if(MakeValidations(username, password, 'predict')):
+        try:
             #Load Model
-            model = LoadModelFrom(username + modelname + ".txt")
-        
-            #Feature Scaling (predictset comes onehotencoded)
-            ss = LoadScalerFrom(username + modelname + "scaler.txt")
-            predictset = ss.transform(predictset)
+            if(MakeValidations(username, password, 'predict')):
+                #Load Model
+                model = LoadModelFrom(username + modelname + ".txt")
             
-            #Make prediction
-            result = model.predict(predictset).tolist()
-            #Return result
-            return {'prediction': result}
-            
-        else:
-            return {"error": "User doesn't exist"}
-            
+                #Feature Scaling (predictset comes onehotencoded)
+                ss = LoadScalerFrom(username + modelname + "scaler.txt")
+                predictset = ss.transform(predictset)
+                
+                #Make prediction
+                result = model.predict(predictset).tolist()
+                #Return result
+                return {'info': 1, 'prediction': result}
+            else:
+                return {"info": 0}
+        except Exception as e:
+            return {'info': -1, 'details': str(e)}
         
         
         
