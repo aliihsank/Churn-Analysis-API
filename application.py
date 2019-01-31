@@ -158,9 +158,10 @@ class Train(Resource):
                 
             modelnameExists = False
             usermodelsInfo = db.modeldetails.find_one({"username": username })
-            for model in usermodelsInfo["models"]:
-                if(modelname == model["modelname"]):
-                    modelnameExists = True
+            if usermodelsInfo is not None:
+                for model in usermodelsInfo["models"]:
+                    if(modelname == model["modelname"]):
+                        modelnameExists = True
             if modelnameExists:
                 return {'info': 0}
             else:
@@ -195,7 +196,6 @@ class Train(Resource):
         except Exception as e:
             return {'info': -1, 'details': str(e)}
         """
-        
         
 class ModelList(Resource):
     def post(self):
