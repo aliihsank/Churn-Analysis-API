@@ -258,19 +258,19 @@ class GMS:
         classifier = Sequential()
         
         # Adding the input layer and the first hidden layer
-        classifier.add(Dense(output_dim = int(numOfCols/2), init = 'uniform', activation = 'relu', input_dim = numOfCols))
+        classifier.add(Dense(units = int(numOfCols/2), kernel_initializer = 'uniform', activation = 'relu', input_dim = numOfCols))
         
         # Adding the second hidden layer
-        classifier.add(Dense(output_dim = int(numOfCols/2), init = 'uniform', activation = 'relu'))
+        classifier.add(Dense(units = int(numOfCols/2), kernel_initializer = 'uniform', activation = 'relu'))
         
         # Adding the output layer
-        classifier.add(Dense(output_dim = 1, init = 'uniform', activation = 'sigmoid'))
+        classifier.add(Dense(units = 1, kernel_initializer = 'uniform', activation = 'sigmoid'))
         
         # Compiling the ANN
         classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
         
         # Fitting the ANN to the Training set
-        classifier.fit(self.X_train, self.y_train, batch_size = 32, nb_epoch = 50)
+        classifier.fit(self.X_train, self.y_train, batch_size = 32, epochs = 50)
                 
         # Predicting the Test set results
         y_predict = classifier.predict(self.X_test)
