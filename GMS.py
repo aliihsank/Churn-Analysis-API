@@ -47,7 +47,12 @@ class GMS:
         self.db = self.client.churndb
         self.modeldetails = self.db.modeldetails
         self.ss = StandardScaler()
-        
+    
+    
+    def SaveTrainStatus(self, status, detail):
+        oldPost = {"username": self.userName, "modelname": self.modelName, "status": status, "detail": detail}
+        self.trainstatus.update_one({"username": self.userName, "modelname": self.modelName}, {"$set": oldPost}, upsert=True)
+    
     
     def SaveModel(self):
         '''Save best model to memory'''
@@ -101,13 +106,10 @@ class GMS:
         
 
 
-    def Preprocess(self):
+    def Preprocess(self):        
         '''Make dataset a dataframe '''
         self.data_frame = pd.DataFrame(self.dataset, columns = self.columns)
         self.data_frame = self.data_frame[self.columns].apply(pd.to_numeric, errors="ignore")
-        
-        print("Number of Rows:")
-        print(self.data_frame.shape)
         
         '''Assign columns'''
         self.X = self.data_frame.iloc[:, (self.categoricalcolumns + self.numericalcolumns)].values
@@ -317,19 +319,47 @@ class GMS:
     
     
     def Run(self):
-        '''Preprocess dataset'''
-        self.Preprocess()
-        
-        '''Create models, find best model'''
-        self.GenerateModels("LogisticRegression")
-        self.GenerateModels("KNN")
-        self.GenerateModels("NaiveBayes")
-        self.GenerateModels("KernelSVM")
-        self.GenerateModels("DecisionTree")
-        self.GenerateModels("RandomForest")
-        self.GenerateModels("ArtificialNeuralNetwork")
-        
-        ''' Save the best model '''
-        self.SaveModel()
-        
-        print("GMS Finished.")
+        try:
+            
+            ''' Save status '''
+            self.SaveTrainStatus(0, 'Preprocess Starting...')
+            
+            '''Preprocess dataset'''
+            self.Preprocess()
+            
+            ''' Save status '''
+            self.SaveTrainStatus(0, 'Preprocess Finished.')
+            
+            ''' Save status '''
+            self.SaveTrainStatus(0, 'GMS Starting...')
+
+            '''Create models, find best model'''
+            self.GenerateModels("LogisticRegression")
+            self.GenerateModels("KNN")
+            self.GenerateModels("NaiveBayes")
+            self.GenerateModels("KernelSVM")
+            self.GenerateModels("DecisionTree")
+            self.GenerateModels("RandomForest")
+            self.GenerateModels("ArtificialNeuralNetwork")
+            
+            ''' Save status '''
+            self.SaveTrainStatus(0, 'GMS Finished.')
+            
+            ''' Save status '''
+            self.SaveTrainStatus(0, 'Best model is being saved.')
+            
+            ''' Save the best model '''
+            self.SaveModel()
+            
+            ''' Save status '''
+            self.SaveTrainStatus(1, 'Best model is saved.')
+            
+            print("GMS Finished Successfuly !")
+        except Exception as e:
+            ''' Save status '''
+            self.SaveTrainStatus(-1, 'GMS Finished with errors: ' + str(e))
+            
+            print("GMS Finished with errors !")
+            
+            
+            
