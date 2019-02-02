@@ -62,7 +62,29 @@ def LoadModelFrom(modelPath):
 class Test(Resource):
     def get(self):
         return {'Test Message': "Hello User"}
-    
+
+class CheckTrainStatus(Resource):
+    def post(self):
+        data = request.get_json()
+
+        username = data["username"]
+        password = data["password"]
+        
+        try:
+            client = pymongo.MongoClient(dburi, ssl=True)
+            db = client.churndb
+            
+            if(MakeValidations(username, password, 'checkTrainStatus')):
+                statuslist = db.userdetails.find_one({"username": username})
+                if statuslist is None:
+                    return {'info': 0}
+                else:
+                    return {'info': 1, 'statuslist': statuslist }
+            else:
+                return {'info': 0}
+        except Exception as e:
+                return {'info': -1, 'details': str(e)}
+            
 
 class Register(Resource):
     def post(self):
@@ -163,6 +185,10 @@ class Train(Resource):
                     for model in usermodelsInfo["models"]:
                         if(modelname == model["modelname"]):
                             modelnameExists = True
+                usermodelsInfo = db.trainstatus.find_one({"username": username, "modelname": modelname })
+                if usermodelsInfo is not None:
+                    if usermodelsInfo["status"] == 0:
+                        return {'info': 0}
                 if modelnameExists:
                     return {'info': 0}
                 else:
@@ -237,6 +263,7 @@ api.add_resource(Register, '/register')
 api.add_resource(Login, '/login')
 api.add_resource(ModelList, '/modelList')
 api.add_resource(Predict, '/predict')
+api.add_resource(CheckTrainStatus, '/checkStatus')
 
 if __name__ == '__main__':
     app.run(debug = False)
