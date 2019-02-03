@@ -51,8 +51,11 @@ class GMS:
     
     
     def SaveTrainStatus(self, status, detail):
-        oldPost = {"username": self.userName, "modelname": self.modelName, "status": status, "detail": detail}
-        self.trainstatus.update_one({"username": self.userName, "modelname": self.modelName}, {"$set": oldPost}, upsert=True)
+        if status == 1:
+            self.trainstatus.delete_one({"username": self.userName, "modelname": self.modelName})            
+        else:
+            oldPost = {"username": self.userName, "modelname": self.modelName, "status": status, "detail": detail}
+            self.trainstatus.update_one({"username": self.userName, "modelname": self.modelName}, {"$set": oldPost}, upsert=True)
     
     
     def SaveModel(self):
@@ -87,7 +90,6 @@ class GMS:
             prevModels.append(dict(newModel))
             oldPost["models"] = prevModels
         
-        
         self.modeldetails.update_one({"username": self.userName}, {"$set": dict(oldPost)}, upsert=True)
         
     
@@ -112,10 +114,6 @@ class GMS:
         self.data_frame = pd.DataFrame(self.dataset, columns = self.columns)
         self.data_frame = self.data_frame[self.columns].apply(pd.to_numeric, errors="ignore")
 
-        #categoricalRange = list(range(0, len(self.categoricalcolumns)))
-
-        print(self.data_frame)
-        
         ''' Handle Missing Values in categorical columns '''
         for col in self.categoricalcolumns:
             print(self.data_frame.iloc[:, col].value_counts())
@@ -127,14 +125,10 @@ class GMS:
         
         numericalRange = list(range(len(self.categoricalcolumns), len(self.categoricalcolumns) + len(self.numericalcolumns)))
         
-        print(self.X)
-        
         ''' Handle Missing Values in numerical columns '''
         imputer = Imputer(missing_values = 'NaN', strategy = 'mean', axis = 0)
         imputer.fit(self.X[:, numericalRange])
         self.X[:, numericalRange] = imputer.transform(self.X[:, numericalRange])
-        
-        print(self.X)
         
         ''' Encode categorical vars '''
         self.EncodeCategoricalVars()
@@ -431,6 +425,7 @@ class GMS:
         self.SaveTrainStatus(1, 'Best model is saved.')
             
         print("GMS Finished Successfuly !")
+        
         """
         try:
             ''' Save status '''
