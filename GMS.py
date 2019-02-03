@@ -114,6 +114,8 @@ class GMS:
 
         #categoricalRange = list(range(0, len(self.categoricalcolumns)))
 
+        print(self.X)
+        
         ''' Handle Missing Values in categorical columns '''
         for i in range(0, len(self.categoricalcolumns)):
             self.data_frame.fillna(self.data_frame.iloc[:, i].value_counts().index[0], inplace = True)
@@ -123,6 +125,8 @@ class GMS:
         self.y = self.data_frame.iloc[:, self.target].values
         
         numericalRange = list(range(len(self.categoricalcolumns), len(self.categoricalcolumns) + len(self.numericalcolumns)))
+        
+        print(self.X)
         
         ''' Handle Missing Values in numerical columns '''
         imputer = Imputer(missing_values = 'NaN', strategy = 'mean', axis = 0)
