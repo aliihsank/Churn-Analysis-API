@@ -197,10 +197,11 @@ class GMS:
         print("Logistic Regression Test Accuracy:")
         print(accuracy_test)
         
-        if(accuracy_test > self.maxScore):
-            self.bestModel = classifier
-            self.maxScore = accuracy_test
-            self.algorithm = "Logistic Regression"
+        if(abs(accuracy_test - accuracy_train) <= 6):
+            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
+                self.bestModel = classifier
+                self.maxScore = (accuracy_train + accuracy_test) / 2
+                self.algorithm = "Logistic Regression"
             
         
     def KNN(self, pnumofneighbour, pmetric, pp):
@@ -218,10 +219,11 @@ class GMS:
         print("KNN Test Accuracy:")
         print(accuracy_test)
         
-        if(accuracy_test > self.maxScore):
-            self.bestModel = classifier
-            self.maxScore = accuracy_test
-            self.algorithm = "KNN"
+        if(abs(accuracy_test - accuracy_train) <= 6):
+            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
+                self.bestModel = classifier
+                self.maxScore = (accuracy_train + accuracy_test) / 2
+                self.algorithm = "KNN"
        
         
     def NaiveBayes(self):
@@ -239,10 +241,11 @@ class GMS:
         print("Naive Bayes Test Accuracy:")
         print(accuracy_test)
         
-        if(accuracy_test > self.maxScore):
-            self.bestModel = classifier
-            self.maxScore = accuracy_test
-            self.algorithm = "Naive Bayes"
+        if(abs(accuracy_test - accuracy_train) <= 6):
+            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
+                self.bestModel = classifier
+                self.maxScore = (accuracy_train + accuracy_test) / 2
+                self.algorithm = "Naive Bayes"
         
         
     def KernelSVM(self, pkernel):
@@ -260,10 +263,11 @@ class GMS:
         print("Kernel SVM Test Accuracy:")
         print(accuracy_test)
         
-        if(accuracy_test > self.maxScore):
-            self.bestModel = classifier
-            self.maxScore = accuracy_test
-            self.algorithm = "Kernel SVM"
+        if(abs(accuracy_test - accuracy_train) <= 6):
+            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
+                self.bestModel = classifier
+                self.maxScore = (accuracy_train + accuracy_test) / 2
+                self.algorithm = "Kernel SVM"
             
 
     def DecisionTree(self, pcriterion):
@@ -281,10 +285,11 @@ class GMS:
         print("Decision Tree Test Accuracy:")
         print(accuracy_test)
         
-        if(accuracy_test > self.maxScore):
-            self.bestModel = classifier
-            self.maxScore = accuracy_test
-            self.algorithm = "Decision Tree"
+        if(abs(accuracy_test - accuracy_train) <= 6):
+            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
+                self.bestModel = classifier
+                self.maxScore = (accuracy_train + accuracy_test) / 2
+                self.algorithm = "Decision Tree"
 
 
     def RandomForest(self, pestimators, pcriterion):
@@ -302,10 +307,11 @@ class GMS:
         print("Random Forest Test Accuracy:")
         print(accuracy_test)
         
-        if(accuracy_test > self.maxScore):
-            self.bestModel = classifier
-            self.maxScore = accuracy_test
-            self.algorithm = "Random Forest"
+        if(abs(accuracy_test - accuracy_train) <= 6):
+            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
+                self.bestModel = classifier
+                self.maxScore = (accuracy_train + accuracy_test) / 2
+                self.algorithm = "Random Forest"
             
             
     def ArtificialNeuralNetwork(self):
@@ -348,10 +354,11 @@ class GMS:
         print("Neural Network Test Accuracy:")
         print(accuracy_test)
         
-        if(accuracy_test > self.maxScore):
-            self.bestModel = classifier
-            self.maxScore = accuracy_test
-            self.algorithm = "Neural Network"
+        if(abs(accuracy_test - accuracy_train) <= 6):
+            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
+                self.bestModel = classifier
+                self.maxScore = (accuracy_train + accuracy_test) / 2
+                self.algorithm = "Neural Network"
 
 
     '''Generates given model type with different parameters and assigns highest acc. model'''
@@ -386,8 +393,42 @@ class GMS:
     
     def Run(self):
         
-        try:
+        ''' Save status '''
+        self.SaveTrainStatus(0, 'Preprocess Starting...')
             
+        '''Preprocess dataset'''
+        self.Preprocess()
+            
+        ''' Save status '''
+        self.SaveTrainStatus(0, 'Preprocess Finished.')
+            
+        ''' Save status '''
+        self.SaveTrainStatus(0, 'GMS Starting...')
+
+        '''Create models, find best model'''
+        self.GenerateModels("LogisticRegression")
+        self.GenerateModels("KNN")
+        self.GenerateModels("NaiveBayes")
+        self.GenerateModels("KernelSVM")
+        self.GenerateModels("DecisionTree")
+        self.GenerateModels("RandomForest")
+        self.GenerateModels("ArtificialNeuralNetwork")
+            
+        ''' Save status '''
+        self.SaveTrainStatus(0, 'GMS Finished.')
+        
+        ''' Save status '''
+        self.SaveTrainStatus(0, 'Best model is being saved.')
+        
+        ''' Save the best model '''
+        self.SaveModel()
+            
+        ''' Save status '''
+        self.SaveTrainStatus(1, 'Best model is saved.')
+            
+        print("GMS Finished Successfuly !")
+        """
+        try:
             ''' Save status '''
             self.SaveTrainStatus(0, 'Preprocess Starting...')
             
@@ -428,5 +469,5 @@ class GMS:
             
             print("GMS Finished with errors: " + str(e))
             
-            
+            """
             
