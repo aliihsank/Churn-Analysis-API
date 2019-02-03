@@ -115,16 +115,20 @@ class GMS:
         ''' Assign columns'''
         self.X = self.data_frame.iloc[:, (self.categoricalcolumns + self.numericalcolumns)].values
         self.y = self.data_frame.iloc[:, self.target].values
-
-        ''' Handle Missing Values in numerical columns '''
-        imputer = Imputer(missing_values = 'NaN', strategy = 'mean', axis = 0)
-        imputer.fit(self.X[:, self.numericalcolumns])
-        self.X[:, self.numericalcolumns] = imputer.transform(self.X[:, self.numericalcolumns])
         
+        categoricalRange = list(range(0, len(self.categoricalcolumns)))
+
         ''' Handle Missing Values in categorical columns '''
         imputer = Imputer(missing_values = 'NaN', strategy = 'most_frequent', axis = 0)
-        imputer.fit(self.X[:, self.categoricalcolumns])
-        self.X[:, self.categoricalcolumns] = imputer.transform(self.X[:, self.categoricalcolumns])
+        imputer.fit(self.X[:, categoricalRange])
+        self.X[:, categoricalRange] = imputer.transform(self.X[:, categoricalRange])
+        
+        numericalRange = list(range(len(self.categoricalcolumns), len(self.categoricalcolumns) + len(self.numericalcolumns)))
+        
+        ''' Handle Missing Values in numerical columns '''
+        imputer = Imputer(missing_values = 'NaN', strategy = 'mean', axis = 0)
+        imputer.fit(self.X[:, numericalRange])
+        self.X[:, numericalRange] = imputer.transform(self.X[:, numericalRange])
         
         ''' Encode categorical vars '''
         self.EncodeCategoricalVars()
