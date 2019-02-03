@@ -111,17 +111,16 @@ class GMS:
         ''' Make dataset a dataframe '''
         self.data_frame = pd.DataFrame(self.dataset, columns = self.columns)
         self.data_frame = self.data_frame[self.columns].apply(pd.to_numeric, errors="ignore")
+
+        #categoricalRange = list(range(0, len(self.categoricalcolumns)))
+
+        ''' Handle Missing Values in categorical columns '''
+        for i in range(0, len(self.categoricalcolumns)):
+            self.data_frame.fillna(self.X.iloc[:, i].value_counts().index[0], inplace = True)
         
         ''' Assign columns'''
         self.X = self.data_frame.iloc[:, (self.categoricalcolumns + self.numericalcolumns)].values
         self.y = self.data_frame.iloc[:, self.target].values
-        
-        categoricalRange = list(range(0, len(self.categoricalcolumns)))
-
-        ''' Handle Missing Values in categorical columns '''
-        imputer = Imputer(missing_values = 'NaN', strategy = 'most_frequent', axis = 0)
-        imputer.fit(self.X[:, categoricalRange])
-        self.X[:, categoricalRange] = imputer.transform(self.X[:, categoricalRange])
         
         numericalRange = list(range(len(self.categoricalcolumns), len(self.categoricalcolumns) + len(self.numericalcolumns)))
         
