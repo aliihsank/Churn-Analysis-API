@@ -114,7 +114,7 @@ class GMS:
 
         #categoricalRange = list(range(0, len(self.categoricalcolumns)))
 
-        print(self.X)
+        print(self.data_frame)
         
         ''' Handle Missing Values in categorical columns '''
         for i in range(0, len(self.categoricalcolumns)):
