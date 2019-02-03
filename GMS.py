@@ -330,6 +330,43 @@ class GMS:
     
     
     def Run(self):
+        
+        ''' Save status '''
+        self.SaveTrainStatus(0, 'Preprocess Starting...')
+            
+        '''Preprocess dataset'''
+        self.Preprocess()
+            
+        ''' Save status '''
+        self.SaveTrainStatus(0, 'Preprocess Finished.')
+            
+        ''' Save status '''
+        self.SaveTrainStatus(0, 'GMS Starting...')
+
+        '''Create models, find best model'''
+        self.GenerateModels("LogisticRegression")
+        self.GenerateModels("KNN")
+        self.GenerateModels("NaiveBayes")
+        self.GenerateModels("KernelSVM")
+        self.GenerateModels("DecisionTree")
+        self.GenerateModels("RandomForest")
+        self.GenerateModels("ArtificialNeuralNetwork")
+            
+        ''' Save status '''
+        self.SaveTrainStatus(0, 'GMS Finished.')
+            
+        ''' Save status '''
+        self.SaveTrainStatus(0, 'Best model is being saved.')
+            
+        ''' Save the best model '''
+        self.SaveModel()
+            
+        ''' Save status '''
+        self.SaveTrainStatus(1, 'Best model is saved.')
+            
+        print("GMS Finished Successfuly !")
+        
+"""
         try:
             
             ''' Save status '''
@@ -372,5 +409,5 @@ class GMS:
             
             print("GMS Finished with errors: " + str(e))
             
-            
+            """
             
