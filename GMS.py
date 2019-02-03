@@ -370,7 +370,7 @@ class GMS:
             ''' Save status '''
             self.SaveTrainStatus(-1, 'GMS Finished with errors: ' + str(e))
             
-            print("GMS Finished with errors !")
+            print("GMS Finished with errors: " + str(e))
             
             
             
