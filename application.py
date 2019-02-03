@@ -75,7 +75,7 @@ class CheckTrainStatus(Resource):
             db = client.churndb
             
             if(MakeValidations(username, password, 'checkTrainStatus')):
-                statuslist = db.userdetails.find_one({"username": username})
+                statuslist = db.userdetails.find_one({"username": username}, {'_id': 0})
                 if statuslist is None:
                     return {'info': 0}
                 else:
