@@ -129,6 +129,8 @@ class GMS:
         imputer.fit(self.X[:, numericalRange])
         self.X[:, numericalRange] = imputer.transform(self.X[:, numericalRange])
         
+        print(self.X)
+        
         ''' Encode categorical vars '''
         self.EncodeCategoricalVars()
         
