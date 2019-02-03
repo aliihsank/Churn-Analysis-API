@@ -62,31 +62,6 @@ def LoadModelFrom(modelPath):
 class Test(Resource):
     def get(self):
         return {'Test Message': "Hello User"}
-
-class CheckTrainStatus(Resource):
-    def post(self):
-        data = request.get_json()
-
-        username = data["username"]
-        password = data["password"]
-        
-        try:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-            
-            if(MakeValidations(username, password, 'checkTrainStatus')):
-                statuslistCursor = db.trainstatus.find({"username": username}, {'_id': 0})
-                if statuslistCursor is None:
-                    return {'info': 0}
-                else:
-                    statuslist = []
-                    for status in statuslistCursor:
-                        statuslist.append(status)
-                    return {'info': 1, 'statuslist': statuslist }
-            else:
-                return {'info': 0}
-        except Exception as e:
-                return {'info': -1, 'details': str(e)}
             
 
 class Register(Resource):
@@ -131,6 +106,65 @@ class Login(Resource):
                 return {'info': '1'}
         except Exception as e:
             return {'info': -1, 'details': str(e)}
+
+
+class CheckTrainStatus(Resource):
+    def post(self):
+        data = request.get_json()
+
+        username = data["username"]
+        password = data["password"]
+        
+        try:
+            client = pymongo.MongoClient(dburi, ssl=True)
+            db = client.churndb
+            
+            if(MakeValidations(username, password, 'checkTrainStatus')):
+                statuslistCursor = db.trainstatus.find({"username": username}, {'_id': 0})
+                if statuslistCursor is None:
+                    return {'info': 0}
+                else:
+                    statuslist = []
+                    for status in statuslistCursor:
+                        statuslist.append(status)
+                    return {'info': 1, 'statuslist': statuslist }
+            else:
+                return {'info': 0}
+        except Exception as e:
+                return {'info': -1, 'details': str(e)}
+            
+
+
+class RemoveModel(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        username = data["username"]
+        password = data["password"]
+        modelname = data["modelname"]
+        
+        try:
+            client = pymongo.MongoClient(dburi, ssl=True)
+            db = client.churndb
+            
+            if(MakeValidations(username, password, 'removeModel')):
+                client = pymongo.MongoClient(dburi, ssl=True)
+                db = client.churndb
+        
+                oldPost = self.modeldetails.find_one({"username": username })
+        
+                '''User has at least one model before '''
+                prevModels = oldPost["models"]
+                newModels = []
+                for model in prevModels:
+                    if model["modelname"] != modelname:
+                        newModels.append(dict(model))
+                oldPost["models"] = newModels
+                db.modeldetails.update_one({"username": username}, {"$set": dict(oldPost)}, upsert=True)
+
+        except Exception as e:
+            return {'info': -1, 'details': str(e)}
+                
 
 
 class ColumnsInfos(Resource):
@@ -267,6 +301,7 @@ api.add_resource(Login, '/login')
 api.add_resource(ModelList, '/modelList')
 api.add_resource(Predict, '/predict')
 api.add_resource(CheckTrainStatus, '/checkStatus')
+api.add_resource(RemoveModel, '/removeModel')
 
 if __name__ == '__main__':
     app.run(debug = False)
