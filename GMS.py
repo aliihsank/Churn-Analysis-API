@@ -186,13 +186,20 @@ class GMS:
         classifier = LogisticRegression(random_state = 0)
         classifier.fit(self.X_train, self.y_train)
         
-        y_predict = classifier.predict(self.X_test)
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
         
-        accuracy = accuracy_score(self.y_test, y_predict)
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
         
-        if(accuracy > self.maxScore):
+        print("Logistic Regression Train Accuracy:")
+        print(accuracy_train)
+        print("Logistic Regression Test Accuracy:")
+        print(accuracy_test)
+        
+        if(accuracy_test > self.maxScore):
             self.bestModel = classifier
-            self.maxScore = accuracy
+            self.maxScore = accuracy_test
             self.algorithm = "Logistic Regression"
             
         
@@ -200,13 +207,20 @@ class GMS:
         classifier = KNeighborsClassifier(n_neighbors = pnumofneighbour, metric = pmetric, p = pp)
         classifier.fit(self.X_train, self.y_train)
         
-        y_predict = classifier.predict(self.X_test)
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
         
-        accuracy = accuracy_score(self.y_test, y_predict)
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
         
-        if(accuracy > self.maxScore):
+        print("KNN Train Accuracy:")
+        print(accuracy_train)
+        print("KNN Test Accuracy:")
+        print(accuracy_test)
+        
+        if(accuracy_test > self.maxScore):
             self.bestModel = classifier
-            self.maxScore = accuracy
+            self.maxScore = accuracy_test
             self.algorithm = "KNN"
        
         
@@ -214,13 +228,20 @@ class GMS:
         classifier = GaussianNB()
         classifier.fit(self.X_train, self.y_train)
         
-        y_predict = classifier.predict(self.X_test)
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
         
-        accuracy = accuracy_score(self.y_test, y_predict)
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
         
-        if(accuracy > self.maxScore):
+        print("Naive Bayes Train Accuracy:")
+        print(accuracy_train)
+        print("Naive Bayes Test Accuracy:")
+        print(accuracy_test)
+        
+        if(accuracy_test > self.maxScore):
             self.bestModel = classifier
-            self.maxScore = accuracy
+            self.maxScore = accuracy_test
             self.algorithm = "Naive Bayes"
         
         
@@ -228,13 +249,20 @@ class GMS:
         classifier = SVC(kernel = pkernel, random_state = 0)
         classifier.fit(self.X_train, self.y_train)
         
-        y_predict = classifier.predict(self.X_test)
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
         
-        accuracy = accuracy_score(self.y_test, y_predict)
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
         
-        if(accuracy > self.maxScore):
+        print("Kernel SVM Train Accuracy:")
+        print(accuracy_train)
+        print("Kernel SVM Test Accuracy:")
+        print(accuracy_test)
+        
+        if(accuracy_test > self.maxScore):
             self.bestModel = classifier
-            self.maxScore = accuracy
+            self.maxScore = accuracy_test
             self.algorithm = "Kernel SVM"
             
 
@@ -242,13 +270,20 @@ class GMS:
         classifier = DecisionTreeClassifier(criterion = pcriterion, random_state = 0)
         classifier.fit(self.X_train, self.y_train)
         
-        y_predict = classifier.predict(self.X_test)
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
         
-        accuracy = accuracy_score(self.y_test, y_predict)
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
         
-        if(accuracy > self.maxScore):
+        print("Decision Tree Train Accuracy:")
+        print(accuracy_train)
+        print("Decision Tree Test Accuracy:")
+        print(accuracy_test)
+        
+        if(accuracy_test > self.maxScore):
             self.bestModel = classifier
-            self.maxScore = accuracy
+            self.maxScore = accuracy_test
             self.algorithm = "Decision Tree"
 
 
@@ -256,13 +291,20 @@ class GMS:
         classifier = RandomForestClassifier(n_estimators = pestimators, criterion = pcriterion, random_state = 0)
         classifier.fit(self.X_train, self.y_train)
         
-        y_predict = classifier.predict(self.X_test)
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
         
-        accuracy = accuracy_score(self.y_test, y_predict)
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
         
-        if(accuracy > self.maxScore):
+        print("Random Forest Train Accuracy:")
+        print(accuracy_train)
+        print("Random Forest Test Accuracy:")
+        print(accuracy_test)
+        
+        if(accuracy_test > self.maxScore):
             self.bestModel = classifier
-            self.maxScore = accuracy
+            self.maxScore = accuracy_test
             self.algorithm = "Random Forest"
             
             
@@ -289,17 +331,27 @@ class GMS:
         classifier.fit(self.X_train, self.y_train, batch_size = 32, epochs = 50)
                 
         # Predicting the Test set results
-        y_predict = classifier.predict(self.X_test)
-        y_predict = (y_predict > 0.5)
+        y_train_predict = classifier.predict(self.X_train)
+        y_train_predict = (y_train_predict > 0.5)
         
-        accuracy = accuracy_score(self.y_test, y_predict)
-        print("Neural Network Accuracy: ")
-        print(accuracy)
+        y_test_predict = classifier.predict(self.X_test)
+        y_test_predict = (y_test_predict > 0.5)
         
-        if(accuracy > self.maxScore):
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
+        
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
+        
+        print("Neural Network Train Accuracy:")
+        print(accuracy_train)
+        print("Neural Network Test Accuracy:")
+        print(accuracy_test)
+        
+        if(accuracy_test > self.maxScore):
             self.bestModel = classifier
-            self.maxScore = accuracy
-            self.algorithm = "Artificial Neural Network"
+            self.maxScore = accuracy_test
+            self.algorithm = "Neural Network"
 
 
     '''Generates given model type with different parameters and assigns highest acc. model'''
@@ -334,42 +386,6 @@ class GMS:
     
     def Run(self):
         
-        ''' Save status '''
-        self.SaveTrainStatus(0, 'Preprocess Starting...')
-            
-        '''Preprocess dataset'''
-        self.Preprocess()
-            
-        ''' Save status '''
-        self.SaveTrainStatus(0, 'Preprocess Finished.')
-            
-        ''' Save status '''
-        self.SaveTrainStatus(0, 'GMS Starting...')
-
-        '''Create models, find best model'''
-        self.GenerateModels("LogisticRegression")
-        self.GenerateModels("KNN")
-        self.GenerateModels("NaiveBayes")
-        self.GenerateModels("KernelSVM")
-        self.GenerateModels("DecisionTree")
-        self.GenerateModels("RandomForest")
-        self.GenerateModels("ArtificialNeuralNetwork")
-            
-        ''' Save status '''
-        self.SaveTrainStatus(0, 'GMS Finished.')
-            
-        ''' Save status '''
-        self.SaveTrainStatus(0, 'Best model is being saved.')
-            
-        ''' Save the best model '''
-        self.SaveModel()
-            
-        ''' Save status '''
-        self.SaveTrainStatus(1, 'Best model is saved.')
-            
-        print("GMS Finished Successfuly !")
-        
-"""
         try:
             
             ''' Save status '''
@@ -412,5 +428,5 @@ class GMS:
             
             print("GMS Finished with errors: " + str(e))
             
-            """
+            
             
