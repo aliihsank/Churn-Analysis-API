@@ -335,7 +335,7 @@ class GMS:
         
         # Fitting the ANN to the Training set
         classifier.fit(self.X_train, self.y_train, batch_size = 32, epochs = 50)
-                
+        
         # Predicting the Test set results
         y_train_predict = classifier.predict(self.X_train)
         y_train_predict = (y_train_predict > 0.5)
@@ -343,11 +343,8 @@ class GMS:
         y_test_predict = classifier.predict(self.X_test)
         y_test_predict = (y_test_predict > 0.5)
         
-        y_train_predict = classifier.predict(self.X_train)
-        y_test_predict = classifier.predict(self.X_test)
-        
-        accuracy_train = accuracy_score(int(self.y_train), y_train_predict.round())
-        accuracy_test = accuracy_score(int(self.y_test), y_test_predict.round())
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
         
         print("Neural Network Train Accuracy:")
         print(accuracy_train)
