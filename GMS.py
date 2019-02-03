@@ -131,8 +131,9 @@ class GMS:
         
         ''' Handle Missing Values in numerical columns '''
         imputer = Imputer(missing_values = 'NaN', strategy = 'mean', axis = 0)
-        imputer.fit(self.X[:, numericalRange])
-        self.X[:, numericalRange] = imputer.transform(self.X[:, numericalRange])
+        for i in numericalRange:
+            imputer.fit(self.X[:, i])
+            self.X[:, i] = imputer.transform(self.X[:, i])
         
         print(self.X)
         
