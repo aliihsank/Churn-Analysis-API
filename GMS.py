@@ -1,4 +1,4 @@
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler, Imputer
 
 from sklearn.model_selection import train_test_split
 
@@ -108,15 +108,25 @@ class GMS:
 
 
     def Preprocess(self):        
-        '''Make dataset a dataframe '''
+        ''' Make dataset a dataframe '''
         self.data_frame = pd.DataFrame(self.dataset, columns = self.columns)
         self.data_frame = self.data_frame[self.columns].apply(pd.to_numeric, errors="ignore")
         
-        '''Assign columns'''
+        ''' Assign columns'''
         self.X = self.data_frame.iloc[:, (self.categoricalcolumns + self.numericalcolumns)].values
         self.y = self.data_frame.iloc[:, self.target].values
 
-        '''Encode categorical vars '''
+        ''' Handle Missing Values in numerical columns '''
+        imputer = Imputer(missing_values = 'NaN', strategy = 'mean', axis = 0)
+        imputer.fit(self.X[:, self.numericalcolumns])
+        self.X[:, self.numericalcolumns] = imputer.transform(self.X[:, self.numericalcolumns])
+        
+        ''' Handle Missing Values in categorical columns '''
+        imputer = Imputer(missing_values = 'NaN', strategy = 'most_frequent', axis = 0)
+        imputer.fit(self.X[:, self.categoricalcolumns])
+        self.X[:, self.categoricalcolumns] = imputer.transform(self.X[:, self.categoricalcolumns])
+        
+        ''' Encode categorical vars '''
         self.EncodeCategoricalVars()
         
         ''' Encode y column '''
@@ -125,7 +135,7 @@ class GMS:
         
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size = .25, random_state = 0)
         
-        '''Scale vars '''
+        ''' Scale vars '''
         self.X_train = self.ss.fit_transform(self.X_train)
         self.X_test = self.ss.transform(self.X_test)
     
