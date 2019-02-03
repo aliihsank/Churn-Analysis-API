@@ -117,9 +117,9 @@ class GMS:
         print(self.data_frame)
         
         ''' Handle Missing Values in categorical columns '''
-        for i in range(0, len(self.categoricalcolumns)):
-            print(self.data_frame.iloc[:, i].value_counts())
-            self.data_frame.fillna(self.data_frame.iloc[:, i].value_counts().index[0], inplace = True)
+        for col in self.categoricalcolumns:
+            print(self.data_frame.iloc[:, col].value_counts())
+            self.data_frame.fillna(self.data_frame.iloc[:, col].value_counts().index[0], inplace = True)
         
         ''' Assign columns'''
         self.X = self.data_frame.iloc[:, (self.categoricalcolumns + self.numericalcolumns)].values
