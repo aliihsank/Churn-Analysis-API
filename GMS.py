@@ -346,8 +346,8 @@ class GMS:
         y_train_predict = classifier.predict(self.X_train)
         y_test_predict = classifier.predict(self.X_test)
         
-        accuracy_train = accuracy_score(self.y_train, y_train_predict)
-        accuracy_test = accuracy_score(self.y_test, y_test_predict)
+        accuracy_train = accuracy_score(int(self.y_train), y_train_predict.round())
+        accuracy_test = accuracy_score(int(self.y_test), y_test_predict.round())
         
         print("Neural Network Train Accuracy:")
         print(accuracy_train)
