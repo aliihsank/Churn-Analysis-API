@@ -46,6 +46,7 @@ class GMS:
         self.client = pymongo.MongoClient(self.dburi, ssl=True)
         self.db = self.client.churndb
         self.modeldetails = self.db.modeldetails
+        self.trainstatus = self.db.trainstatus
         self.ss = StandardScaler()
     
     
