@@ -116,7 +116,7 @@ class GMS:
 
         ''' Handle Missing Values in categorical columns '''
         for col in self.categoricalcolumns:
-            print(self.data_frame.iloc[:, col].value_counts())
+            #print(self.data_frame.iloc[:, col].value_counts())
             self.data_frame.iloc[:, col].fillna(self.data_frame.iloc[:, col].value_counts().index[0], inplace = True)
         
         ''' Assign columns'''
@@ -173,12 +173,9 @@ class GMS:
             if(hasMulticlassCat): 
                 del numOfUniqueValsForCatCols[-1]
                         
-            print(self.X.shape)
-            print(self.X)
             oneHotEncoder = OneHotEncoder(categorical_features = feature_list, sparse=False)
             self.X = oneHotEncoder.fit_transform(self.X)
-            print(self.X.shape)
-            print(self.X)
+            
             '''Remove dummy variable'''
             self.X = np.delete(self.X, numOfUniqueValsForCatCols, 1)
         
@@ -470,6 +467,6 @@ class GMS:
             self.SaveTrainStatus(-1, 'GMS Finished with errors: ' + str(e))
             
             print("GMS Finished with errors: " + str(e))
-            print("Server is gone...")
+            
             """
             
