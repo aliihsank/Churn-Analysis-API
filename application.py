@@ -182,21 +182,17 @@ class ColumnsInfos(Resource):
                 data_frame = data_frame[columns].apply(pd.to_numeric, errors="ignore")
                 
                 colInfos = []
-                chartInfos = []
                 
                 for i in range(len(columns)):
                     cat = 0
                     if(data_frame.iloc[:,[i]].values.dtype is np.dtype("object")):
                         cat = 1
-                    num = len(set(data_frame.iloc[:,i]))
                     
-                    values = data_frame.iloc[:, i].value_counts().keys().tolist()
-                    counts = data_frame.iloc[:, i].value_counts().tolist()
+                    counterObj = data_frame.iloc[:, i].value_counts()
                     
-                    colInfos.append({"name": columns[i] , "number": num, "cat": cat })
-                    chartInfos.append({"name": columns[i], "values": values, "counts": counts })
+                    colInfos.append({"name": columns[i], "values": counterObj.keys().tolist(), "counts": counterObj.tolist(), "cat": cat })
                     
-                return {'info': 1, 'colInfos': colInfos, 'chartIfos': chartInfos}
+                return {'info': 1, 'colInfos': colInfos}
             else:
                 return {'info': 0}
         except Exception as e:
