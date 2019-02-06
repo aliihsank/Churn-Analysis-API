@@ -173,9 +173,10 @@ class GMS:
             if(hasMulticlassCat): 
                 del numOfUniqueValsForCatCols[-1]
                         
+            print(self.X)
             oneHotEncoder = OneHotEncoder(categorical_features = feature_list, sparse=False)
             self.X = oneHotEncoder.fit_transform(self.X)
-            
+            print(self.X)
             '''Remove dummy variable'''
             self.X = np.delete(self.X, numOfUniqueValsForCatCols, 1)
         
