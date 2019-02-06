@@ -153,8 +153,7 @@ class GMS:
         
         #Check if there is categorical variable
         if len(self.categoricalcolumns) != 0:
-            i = 0
-            for col in self.categoricalcolumns:
+            for i in range(0, len(self.categoricalcolumns)):
                 numOfUniqueVals = len(pd.unique(self.X[:, i]).tolist())
                 
                 labelEncoder = LabelEncoder()
@@ -169,14 +168,13 @@ class GMS:
                     ''' save number of unique vals for every categorical column '''
                     numOfUniqueValsForCatCols.append(numOfUniqueValsForCatCols[-1] + numOfUniqueVals)
                     hasMulticlassCat = True
-                i += 1
             
             #Remove last index(no need)
             if(hasMulticlassCat): 
                 del numOfUniqueValsForCatCols[-1]
-            
-            oneHotEncoder = OneHotEncoder(categorical_features = feature_list)
-            self.X = oneHotEncoder.fit_transform(self.X).toarray()
+                        
+            oneHotEncoder = OneHotEncoder(categorical_features = feature_list, sparse=False)
+            self.X = oneHotEncoder.fit_transform(self.X)
             
             '''Remove dummy variable'''
             self.X = np.delete(self.X, numOfUniqueValsForCatCols, 1)
