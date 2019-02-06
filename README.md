@@ -65,6 +65,4 @@ POST https://churn-analysis-api.herokuapp.com/modelList
 
 
 ### TODOs: ###
-- Visualisation of Results
-- Saving analysis and visualising old results (Analysis History)
 - Custom Model Selection (I know that)
