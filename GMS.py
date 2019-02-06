@@ -173,9 +173,11 @@ class GMS:
             if(hasMulticlassCat): 
                 del numOfUniqueValsForCatCols[-1]
                         
+            print(self.X.shape)
             print(self.X)
             oneHotEncoder = OneHotEncoder(categorical_features = feature_list, sparse=False)
             self.X = oneHotEncoder.fit_transform(self.X)
+            print(self.X.shape)
             print(self.X)
             '''Remove dummy variable'''
             self.X = np.delete(self.X, numOfUniqueValsForCatCols, 1)
@@ -316,6 +318,8 @@ class GMS:
             
     def ArtificialNeuralNetwork(self):
         
+        print(self.X[0])
+        print(len(self.X[0]))
         numOfCols = len(self.X[0])
         
         # Initialising the ANN
