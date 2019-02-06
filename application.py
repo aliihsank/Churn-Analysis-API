@@ -18,6 +18,7 @@ from GMS import GMS
 
 dburi = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
 
+
 app = Flask(__name__)
 api = Api(app)
 CORS(app)
@@ -196,7 +197,8 @@ class ColumnsInfos(Resource):
                 return {'info': 0}
         except Exception as e:
             return {'info': -1, 'details': str(e)}
-        
+     
+
 
 class Train(Resource):
     def post(self):
@@ -205,11 +207,7 @@ class Train(Resource):
         username = data["username"]
         password = data["password"]
         modelname = data["modelname"]
-        dataset = data["dataset"]
-        columns = data["columns"]
-        target = data["target"]
-        categoricalcolumns = data["categoricalcolumns"]
-        numericalcolumns = data["numericalcolumns"]
+        isCustomized = data["isCustomized"]
         
         try:
             if(MakeValidations(username, password, 'train')):
@@ -229,9 +227,9 @@ class Train(Resource):
                 if modelnameExists:
                     return {'info': 0}
                 else:
-                    gms = GMS(username, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns)
-                        
-                    run = Thread(target = gms.Run, args = ())
+                    gms = GMS(data)
+                    
+                    run = Thread(target = gms.Run, args = (isCustomized))
                     run.start()
                     return {'info': 1}
             else:
