@@ -33,15 +33,16 @@ class GMS:
     dburi = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
     
     
-    def __init__(self, username, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns):
+    def __init__(self, data):
         self.name = ''
-        self.userName = username
-        self.modelName = modelname
-        self.dataset = dataset
-        self.columns = columns
-        self.target = target
-        self.categoricalcolumns = categoricalcolumns
-        self.numericalcolumns = numericalcolumns
+        self.data = data
+        self.userName = data["username"]
+        self.modelName = data["modelname"]
+        self.dataset = data["dataset"]
+        self.columns = data["columns"]
+        self.target = data["target"]
+        self.categoricalcolumns = data["categoricalcolumns"]
+        self.numericalcolumns = data["numericalcolumns"]
         
         self.client = pymongo.MongoClient(self.dburi, ssl=True)
         self.db = self.client.churndb
@@ -360,36 +361,56 @@ class GMS:
 
 
     '''Generates given model type with different parameters and assigns highest acc. model'''
-    def GenerateModels(self, modelType):        
-        '''General -> Train-Test Size'''
-        '''KNN -> neighbournum, metric, p'''
-        '''KernelSVM -> kernel'''
-        '''DecisionTree -> criterion'''
-        '''RandomForest -> estimators, criterion'''
-        if(modelType == "LogisticRegression"):
-            self.LogisticRegression()
-        elif(modelType == "KNN"):
-            for numofneighbour in range(3,7):
-                for p in range(1,5):
-                    for metric in ["minkowski"]:
-                        self.KNN(numofneighbour, metric, p)        
-        elif(modelType == "NaiveBayes"):
-            self.NaiveBayes()
-        elif(modelType == "KernelSVM"):
-            for kernel in ["linear", "poly", "rbf", "sigmoid"]:
+    def GenerateModels(self, modelType, isCustomized = False):
+        if isCustomized:
+            if(modelType == "LogisticRegression"):
+                self.LogisticRegression()
+            elif(modelType == "KNN"):
+                numofneighbour = self.data["numofneighbour"]
+                p = self.data["p"]
+                metric = self.data["metric"]
+                self.KNN(numofneighbour, metric, p)        
+            elif(modelType == "NaiveBayes"):
+                self.NaiveBayes()
+            elif(modelType == "KernelSVM"):
+                kernel = self.data["kernel"]
                 self.KernelSVM(kernel)
-        elif(modelType == "DecisionTree"):
-            for criterion in ["gini", "entropy"]:
+            elif(modelType == "DecisionTree"):
+                criterion = self.data["criterion"]
                 self.DecisionTree(criterion)
-        elif(modelType == "RandomForest"):
-            for estimators in range(8,14):
+            elif(modelType == "RandomForest"):
+                estimators = self.data["estimators"]
+                criterion = self.data["criterion"]
+                self.RandomForest(estimators, criterion)
+            elif(modelType == "ArtificialNeuralNetwork"):
+                self.ArtificialNeuralNetwork()
+            
+        else:
+            
+            if(modelType == "LogisticRegression"):
+                self.LogisticRegression()
+            elif(modelType == "KNN"):
+                for numofneighbour in range(3,7):
+                    for p in range(1,5):
+                        for metric in ["minkowski"]:
+                            self.KNN(numofneighbour, metric, p)        
+            elif(modelType == "NaiveBayes"):
+                self.NaiveBayes()
+            elif(modelType == "KernelSVM"):
+                for kernel in ["linear", "poly", "rbf", "sigmoid"]:
+                    self.KernelSVM(kernel)
+            elif(modelType == "DecisionTree"):
                 for criterion in ["gini", "entropy"]:
-                    self.RandomForest(estimators, criterion)
-        elif(modelType == "ArtificialNeuralNetwork"):
-            self.ArtificialNeuralNetwork()
+                    self.DecisionTree(criterion)
+            elif(modelType == "RandomForest"):
+                for estimators in range(8,14):
+                    for criterion in ["gini", "entropy"]:
+                        self.RandomForest(estimators, criterion)
+            elif(modelType == "ArtificialNeuralNetwork"):
+                self.ArtificialNeuralNetwork()
     
     
-    def Run(self):
+    def Run(self, isCustomized = False):
         
         ''' Save status '''
         self.SaveTrainStatus(0, 'Preprocess Starting...')
@@ -398,25 +419,22 @@ class GMS:
         self.Preprocess()
             
         ''' Save status '''
-        self.SaveTrainStatus(0, 'Preprocess Finished.')
-            
-        ''' Save status '''
-        self.SaveTrainStatus(0, 'GMS Starting...')
+        self.SaveTrainStatus(0, 'Preprocess Finished.GMS Starting...')
 
         '''Create models, find best model'''
-        self.GenerateModels("LogisticRegression")
-        self.GenerateModels("KNN")
-        self.GenerateModels("NaiveBayes")
-        self.GenerateModels("KernelSVM")
-        self.GenerateModels("DecisionTree")
-        self.GenerateModels("RandomForest")
-        self.GenerateModels("ArtificialNeuralNetwork")
+        if isCustomized:
+            self.GenerateModels(self.data["modelType"], isCustomized = True)
+        else:
+            self.GenerateModels("LogisticRegression")
+            self.GenerateModels("KNN")
+            self.GenerateModels("NaiveBayes")
+            self.GenerateModels("KernelSVM")
+            self.GenerateModels("DecisionTree")
+            self.GenerateModels("RandomForest")
+            self.GenerateModels("ArtificialNeuralNetwork")
             
         ''' Save status '''
-        self.SaveTrainStatus(0, 'GMS Finished.')
-        
-        ''' Save status '''
-        self.SaveTrainStatus(0, 'Best model is being saved.')
+        self.SaveTrainStatus(0, 'GMS Finished.Best model is being saved.')
         
         ''' Save the best model '''
         self.SaveModel()
