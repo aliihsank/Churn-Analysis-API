@@ -181,7 +181,8 @@ class ColumnsInfos(Resource):
                 data_frame = pd.DataFrame(dataset, columns = columns)
                 data_frame = data_frame[columns].apply(pd.to_numeric, errors="ignore")
                 
-                result = []
+                colInfos = []
+                chartInfos = []
                 
                 for i in range(len(columns)):
                     cat = 0
@@ -189,9 +190,9 @@ class ColumnsInfos(Resource):
                         cat = 1
                     num = len(set(data_frame.iloc[:,i]))
                     
-                    result.append({"name": columns[i] , "number": num, "cat": cat })
-                
-                return {'info': 1, 'colInfos': result}
+                    colInfos.append({"name": columns[i] , "number": num, "cat": cat })
+                    chartInfos.append(self.data_frame.iloc[:, i].value_counts())
+                return {'info': 1, 'colInfos': colInfos, 'chartIfos': chartInfos}
             else:
                 return {'info': 0}
         except Exception as e:
