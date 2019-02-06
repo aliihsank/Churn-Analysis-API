@@ -191,6 +191,8 @@ class ColumnsInfos(Resource):
                     num = len(set(data_frame.iloc[:,i]))
                     
                     colInfos.append({"name": columns[i] , "number": num, "cat": cat })
+                    print(data_frame.iloc[:, i].value_counts())
+                    print(data_frame.iloc[:, i].value_counts().tolist())
                     chartInfos.append(data_frame.iloc[:, i].value_counts().tolist())
                 return {'info': 1, 'colInfos': colInfos, 'chartIfos': chartInfos}
             else:
