@@ -470,6 +470,6 @@ class GMS:
             self.SaveTrainStatus(-1, 'GMS Finished with errors: ' + str(e))
             
             print("GMS Finished with errors: " + str(e))
-            
+            print("Server is gone...")
             """
             
