@@ -67,3 +67,4 @@ POST https://churn-analysis-api.herokuapp.com/modelList
 ### TODOs: ###
 - Custom Model Creation
 - Add Validations
+- Add remove method for model status
