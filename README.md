@@ -65,4 +65,5 @@ POST https://churn-analysis-api.herokuapp.com/modelList
 
 
 ### TODOs: ###
-- Custom Model Selection (I know that)
+- Custom Model Creation
+- Add Validations
