@@ -129,20 +129,11 @@ class Register(Resource):
         email = data["email"]
         username = data["username"]
         password = data["password"]
-        usertype = data["usertype"]
         
-        if usertype == "Beginner":
-            columnsInfos = 2
-            train = 2
-            predict = 10
-        elif usertype == "Hobbiest":
-            columnsInfos = 5
-            train = 5
-            predict = 20
-        elif usertype == "Professional":
-            columnsInfos = 10
-            train = 10
-            predict = 40
+        usertype = "Beginner"
+        columnsInfos = 2
+        train = 2
+        predict = 10
         
         if email is None or username is None or password is None:
             return {'info': '0'}
@@ -159,6 +150,44 @@ class Register(Resource):
                     return {'info': 0}
             except Exception as e:
                 return {'info': -1, 'details': str(e)}
+    
+
+
+class UpdateUserPlan(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        username = data["username"]
+        password = data["password"]
+        usertype = data["usertype"]
+        
+        if usertype == "Hobbiest":
+            columnsInfos = 5
+            train = 5
+            predict = 20
+        elif usertype == "Professional":
+            columnsInfos = 10
+            train = 10
+            predict = 40
+        else:
+            return {'info': 0}
+            
+        try:
+            client = pymongo.MongoClient(dburi, ssl=True)
+            db = client.churndb
+                
+            oldPost = db.userdetails.find_one({"username": username, "password": password})
+            oldPost["usertype"] = usertype
+            oldPost["columnsInfos"] = columnsInfos
+            oldPost["train"] = train
+            oldPost["predict"] = predict
+            oldPost["endDate"] = (datetime.now() + timedelta(days=365))
+            
+            db.userdetails.update_one({"username": username}, {"$set": dict(oldPost)}, upsert=True)
+            return {'info': 1}
+        except Exception as e:
+            return {'info': -1, 'details': str(e)}
+    
     
     
 class Login(Resource):
@@ -403,6 +432,7 @@ api.add_resource(Predict, '/predict')
 api.add_resource(CheckTrainStatus, '/checkStatus')
 api.add_resource(RemoveModel, '/removeModel')
 api.add_resource(GetUserPlan, '/getUserPlan')
+api.add_resource(UpdateUserPlan, '/updateUserPlan')
 
 if __name__ == '__main__':
     app.run(debug = False)
