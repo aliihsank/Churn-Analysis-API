@@ -412,73 +412,37 @@ class GMS:
     
     def Run(self, isCustomized = 0):
         
-        ''' Save status '''
-        self.SaveTrainStatus(0, 'Preprocess Starting...')
-            
-        '''Preprocess dataset'''
-        self.Preprocess()
-            
-        ''' Save status '''
-        self.SaveTrainStatus(0, 'Preprocess Finished.GMS Starting...')
-
-        '''Create models, find best model'''
-        if isCustomized == 1:
-            self.GenerateModels(self.data["modelType"], isCustomized = 1)
-        else:
-            self.GenerateModels("LogisticRegression")
-            self.GenerateModels("KNN")
-            self.GenerateModels("NaiveBayes")
-            self.GenerateModels("KernelSVM")
-            self.GenerateModels("DecisionTree")
-            self.GenerateModels("RandomForest")
-            self.GenerateModels("ArtificialNeuralNetwork")
-            
-        ''' Save status '''
-        self.SaveTrainStatus(0, 'GMS Finished.Best model is being saved.')
-        
-        ''' Save the best model '''
-        self.SaveModel()
-            
-        ''' Save status '''
-        self.SaveTrainStatus(1, 'Best model is saved.')
-            
-        print("GMS Finished Successfuly !")
-        
-        """
         try:
             ''' Save status '''
             self.SaveTrainStatus(0, 'Preprocess Starting...')
-            
+                
             '''Preprocess dataset'''
             self.Preprocess()
-            
+                
             ''' Save status '''
-            self.SaveTrainStatus(0, 'Preprocess Finished.')
-            
-            ''' Save status '''
-            self.SaveTrainStatus(0, 'GMS Starting...')
-
+            self.SaveTrainStatus(0, 'Preprocess Finished.GMS Starting...')
+    
             '''Create models, find best model'''
-            self.GenerateModels("LogisticRegression")
-            self.GenerateModels("KNN")
-            self.GenerateModels("NaiveBayes")
-            self.GenerateModels("KernelSVM")
-            self.GenerateModels("DecisionTree")
-            self.GenerateModels("RandomForest")
-            self.GenerateModels("ArtificialNeuralNetwork")
-            
+            if isCustomized == 1:
+                self.GenerateModels(self.data["modelType"], isCustomized = 1)
+            else:
+                self.GenerateModels("LogisticRegression")
+                self.GenerateModels("KNN")
+                self.GenerateModels("NaiveBayes")
+                self.GenerateModels("KernelSVM")
+                self.GenerateModels("DecisionTree")
+                self.GenerateModels("RandomForest")
+                self.GenerateModels("ArtificialNeuralNetwork")
+                
             ''' Save status '''
-            self.SaveTrainStatus(0, 'GMS Finished.')
-            
-            ''' Save status '''
-            self.SaveTrainStatus(0, 'Best model is being saved.')
+            self.SaveTrainStatus(0, 'GMS Finished.Best model is being saved.')
             
             ''' Save the best model '''
             self.SaveModel()
-            
+                
             ''' Save status '''
             self.SaveTrainStatus(1, 'Best model is saved.')
-            
+                
             print("GMS Finished Successfuly !")
         except Exception as e:
             ''' Save status '''
@@ -486,5 +450,5 @@ class GMS:
             
             print("GMS Finished with errors: " + str(e))
             
-            """
+            
             
