@@ -21,7 +21,7 @@
 It has following methods that can be requested:
 
 - Test ()           
-- Register (email, username, password, usertype)
+- Register (email, username, password)
 - Login (username, password)
 - ColumnsInfos (username, password, columns, dataset)
 - Train (username, password, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns, isCustomized, {classifier specific variables})
@@ -30,6 +30,7 @@ It has following methods that can be requested:
 - CheckTrainStatus (username, password)
 - RemoveModel (username, password, modelname)
 - GetUserPlan (username, password)
+- UpdateUserPlan (username, password, usertype)
 
 ## GMS Module Details ##
 
@@ -71,6 +72,8 @@ POST https://churn-analysis-api.herokuapp.com/checkStatus
 POST https://churn-analysis-api.herokuapp.com/removeModel
 
 POST https://churn-analysis-api.herokuapp.com/getUserPlan
+
+POST https://churn-analysis-api.herokuapp.com/updateUserPlan
 
 
 ### TODOs: ###
