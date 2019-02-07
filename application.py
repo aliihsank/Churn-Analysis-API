@@ -82,24 +82,26 @@ def ValidateUserPlan(username, requestedMethod):
         -predict : 40 (Single or Multiple)
     
     """
-    
-    client = pymongo.MongoClient(dburi, ssl=True)
-    db = client.churndb
-    
-    oldPost = db.userdetails.find_one({"username": username})
-    
-    try:
-        if oldPost["endDate"] < datetime.now():
-            if oldPost[requestedMethod] > 0:
-                oldPost[requestedMethod] -= 1
-                db.userdetails.update_one({"username": username}, {"$set": dict(oldPost)}, upsert=True)
-                return True
+    if requestedMethod == "columnsInfos" or requestedMethod == "train" or requestedMethod == "predict":
+        client = pymongo.MongoClient(dburi, ssl=True)
+        db = client.churndb
+        
+        oldPost = db.userdetails.find_one({"username": username})
+        
+        try:
+            if oldPost["endDate"] > datetime.now():
+                if oldPost[requestedMethod] > 0:
+                    oldPost[requestedMethod] -= 1
+                    db.userdetails.update_one({"username": username}, {"$set": dict(oldPost)}, upsert=True)
+                    return True
+                else:
+                    return False
             else:
                 return False
-        else:
+        except Exception as e:
             return False
-    except Exception as e:
-        return False
+    else:
+        return True
         
     
         
