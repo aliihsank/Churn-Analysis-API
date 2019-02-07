@@ -354,9 +354,9 @@ class Train(Resource):
                 usermodelsInfo = db.trainstatus.find_one({"username": username, "modelname": modelname })
                 if usermodelsInfo is not None:
                     if usermodelsInfo["status"] == 0:
-                        return {'info': 0}
+                        return {'info': 0, 'details': 'model exists'}
                 if modelnameExists:
-                    return {'info': 0}
+                    return {'info': 0, 'details': 'model exists'}
                 else:
                     gms = GMS(data)
                     
@@ -364,7 +364,7 @@ class Train(Resource):
                     run.start()
                     return {'info': 1}
             else:
-                return {'info': 0}
+                return {'info': 0, 'details': 'validation error'}
         except Exception as e:
             return {'info': -1, 'details': str(e)}
         
