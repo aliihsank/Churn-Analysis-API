@@ -361,8 +361,8 @@ class GMS:
 
 
     '''Generates given model type with different parameters and assigns highest acc. model'''
-    def GenerateModels(self, modelType, isCustomized = False):
-        if isCustomized:
+    def GenerateModels(self, modelType, isCustomized = 0):
+        if isCustomized == 1:
             if(modelType == "LogisticRegression"):
                 self.LogisticRegression()
             elif(modelType == "KNN"):
@@ -410,7 +410,7 @@ class GMS:
                 self.ArtificialNeuralNetwork()
     
     
-    def Run(self, isCustomized = False):
+    def Run(self, isCustomized = 0):
         
         ''' Save status '''
         self.SaveTrainStatus(0, 'Preprocess Starting...')
@@ -422,8 +422,8 @@ class GMS:
         self.SaveTrainStatus(0, 'Preprocess Finished.GMS Starting...')
 
         '''Create models, find best model'''
-        if isCustomized:
-            self.GenerateModels(self.data["modelType"], isCustomized = True)
+        if isCustomized == 1:
+            self.GenerateModels(self.data["modelType"], isCustomized = 1)
         else:
             self.GenerateModels("LogisticRegression")
             self.GenerateModels("KNN")
