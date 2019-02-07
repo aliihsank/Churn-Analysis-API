@@ -316,8 +316,6 @@ class GMS:
             
     def ArtificialNeuralNetwork(self):
         
-        print(self.X[0])
-        print(len(self.X[0]))
         numOfCols = len(self.X[0])
         
         # Initialising the ANN
