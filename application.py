@@ -402,7 +402,7 @@ api.add_resource(ModelList, '/modelList')
 api.add_resource(Predict, '/predict')
 api.add_resource(CheckTrainStatus, '/checkStatus')
 api.add_resource(RemoveModel, '/removeModel')
-api.add_resource(GetUserPlan, 'getUserPlan')
+api.add_resource(GetUserPlan, '/getUserPlan')
 
 if __name__ == '__main__':
     app.run(debug = False)
