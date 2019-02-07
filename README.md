@@ -59,9 +59,15 @@ POST https://churn-analysis-api.herokuapp.com/columnsInfos
 
 POST https://churn-analysis-api.herokuapp.com/train
 
+POST https://churn-analysis-api.herokuapp.com/modelList
+
 POST https://churn-analysis-api.herokuapp.com/predict
 
-POST https://churn-analysis-api.herokuapp.com/modelList
+POST https://churn-analysis-api.herokuapp.com/checkStatus
+
+POST https://churn-analysis-api.herokuapp.com/removeModel
+
+POST https://churn-analysis-api.herokuapp.com/getUserPlan
 
 
 ### TODOs: ###
