@@ -21,7 +21,7 @@
 It has following methods that can be requested:
 
 - Test ()           
-- Register (email, username, password)
+- Register (email, username, password, usertype)
 - Login (username, password)
 - ColumnsInfos (username, password, columns, dataset)
 - Train (username, password, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns, isCustomized, {classifier specific variables})
