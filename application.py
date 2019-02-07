@@ -356,9 +356,9 @@ class Train(Resource):
                 usermodelsInfo = db.trainstatus.find_one({"username": username, "modelname": modelname })
                 if usermodelsInfo is not None:
                     if usermodelsInfo["status"] == 0:
-                        return {'info': 0, 'details': 'model exists'}
+                        return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
                 if modelnameExists:
-                    return {'info': 0, 'details': 'model exists'}
+                    return {'info': 0, 'details': 'Your have reached your limit'}
                 else:
                     gms = GMS(data)
                     
