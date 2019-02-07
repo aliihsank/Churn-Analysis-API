@@ -358,7 +358,7 @@ class Train(Resource):
                     if usermodelsInfo["status"] == 0:
                         return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
                 if modelnameExists:
-                    return {'info': 0, 'details': 'Your have reached your limit'}
+                    return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
                 else:
                     gms = GMS(data)
                     
@@ -366,7 +366,7 @@ class Train(Resource):
                     run.start()
                     return {'info': 1}
             else:
-                return {'info': 0, 'details': 'validation error'}
+                return {'info': 0, 'details': 'Your have reached your limit.'}
         except Exception as e:
             return {'info': -1, 'details': str(e)}
         
