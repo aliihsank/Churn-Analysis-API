@@ -74,4 +74,6 @@ POST https://churn-analysis-api.herokuapp.com/getUserPlan
 
 
 ### TODOs: ###
-- ALL IS DONE !
+- Add auto splitting support for irrelevant columns
+- Optimization
+- Encapsulation
