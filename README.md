@@ -24,9 +24,12 @@ It has following methods that can be requested:
 - Register (email, username, password)
 - Login (username, password)
 - ColumnsInfos (username, password, columns, dataset)
-- Train (username, password, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns)
-- Predict (username, password, modelname, predictset)
+- Train (username, password, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns, isCustomized, {classifier specific variables})
 - ModelList(username, password)
+- Predict (username, password, modelname, predictset)
+- CheckTrainStatus (username, password)
+- RemoveModel (username, password, modelname)
+- GetUserPlan (username, password)
 
 ## GMS Module Details ##
 
