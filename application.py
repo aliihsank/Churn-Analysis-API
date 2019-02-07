@@ -362,7 +362,7 @@ class Train(Resource):
                 else:
                     gms = GMS(data)
                     
-                    run = Thread(target = gms.Run, args = (isCustomized))
+                    run = Thread(target = gms.Run, args = (isCustomized,))
                     run.start()
                     return {'info': 1}
             else:
