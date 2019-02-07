@@ -9,6 +9,8 @@ from threading import Thread
 import pandas as pd
 import numpy as np
 
+from datetime import datetime, timedelta
+
 import pickle
 import pymongo
 import boto3
@@ -28,6 +30,7 @@ def MakeValidations(username, password, requestedMethod):
     if (ValidateUser(username, password)):
         if(ValidateUserPlan(username, requestedMethod)):
             return True
+        
     return False
 
 
@@ -42,7 +45,62 @@ def ValidateUser(username, password):
     
     
 def ValidateUserPlan(username, requestedMethod):
-    return True
+    
+    """
+    User Attributes:
+        -User Type
+        -columnsInfos
+        -train
+        -predict
+        
+    Beginner:
+        -Free
+        -checkTrainStatus : Unlimited
+        -removeModel : Unlimited
+        -columnsInfos : 2
+        -train : 2
+        -modellist : Unlimited
+        -predict : 10 (Single or Multiple)
+        
+    Hobbiest:
+        -X Dollar
+        -checkTrainStatus : Unlimited
+        -removeModel : Unlimited
+        -columnsInfos : 5
+        -train : 5
+        -modellist : Unlimited
+        -predict : 20 (Single or Multiple)
+    
+    
+    Professional:
+        -2X Dollar
+        -checkTrainStatus : Unlimited
+        -removeModel : Unlimited
+        -columnsInfos : 10
+        -train : 10
+        -modellist : Unlimited
+        -predict : 40 (Single or Multiple)
+    
+    """
+    
+    client = pymongo.MongoClient(dburi, ssl=True)
+    db = client.churndb
+    
+    oldPost = db.userdetails.find_one({"username": username})
+    
+    try:
+        if oldPost["endDate"] < datetime.now():
+            if oldPost[requestedMethod] > 0:
+                oldPost[requestedMethod] -= 1
+                db.userdetails.update_one({"username": username}, {"$set": dict(oldPost)}, upsert=True)
+                return True
+            else:
+                return False
+        else:
+            return False
+    except Exception as e:
+        return False
+        
     
         
 def LoadScalerFrom(scalerPath):
@@ -71,6 +129,20 @@ class Register(Resource):
         email = data["email"]
         username = data["username"]
         password = data["password"]
+        usertype = data["usertype"]
+        
+        if usertype == "Beginner":
+            columnsInfos = 2
+            train = 2
+            predict = 10
+        elif usertype == "Hobbiest":
+            columnsInfos = 5
+            train = 5
+            predict = 20
+        elif usertype == "Professional":
+            columnsInfos = 10
+            train = 10
+            predict = 40
         
         if email is None or username is None or password is None:
             return {'info': '0'}
@@ -80,7 +152,7 @@ class Register(Resource):
                 db = client.churndb
                 
                 if db.userdetails.find_one({"username": username}) is None:
-                    post = { "email":email, "username": username, "password":password }
+                    post = { "email":email, "username": username, "password":password, "usertype": usertype, "columnsInfos": columnsInfos, "train": train, "predict": predict, "endDate": (datetime.now() + timedelta(days=365)) }
                     db.userdetails.insert_one(post)
                     return {'info': 1}
                 else:
@@ -108,6 +180,26 @@ class Login(Resource):
             return {'info': -1, 'details': str(e)}
 
 
+class GetUserPlan(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        username = data["username"]
+        password = data["password"]
+        
+        try:
+            client = pymongo.MongoClient(dburi, ssl=True)
+            db = client.churndb
+            
+            userdetails = db.userdetails.find_one({"username": username, "password": password})
+            
+            return {'info': 1, 'user': userdetails}
+            
+        except Exception as e:
+            return {'info': -1, 'details': str(e)}
+
+
+
 class CheckTrainStatus(Resource):
     def post(self):
         data = request.get_json()
@@ -131,7 +223,7 @@ class CheckTrainStatus(Resource):
             else:
                 return {'info': 0}
         except Exception as e:
-                return {'info': -1, 'details': str(e)}
+            return {'info': -1, 'details': str(e)}
             
 
 
@@ -151,17 +243,27 @@ class RemoveModel(Resource):
                 client = pymongo.MongoClient(dburi, ssl=True)
                 db = client.churndb
         
-                oldPost = self.modeldetails.find_one({"username": username })
+                #Remove from modeldetails
+                oldPost = db.modeldetails.find_one({"username": username })
         
                 '''User has at least one model before '''
                 prevModels = oldPost["models"]
                 newModels = []
+                inModelDetails = False
                 for model in prevModels:
-                    if model["modelname"] != modelname:
+                    if model["modelname"] == modelname:
+                        inModelDetails = True
+                    else:
                         newModels.append(dict(model))
-                oldPost["models"] = newModels
-                db.modeldetails.update_one({"username": username}, {"$set": dict(oldPost)}, upsert=True)
-
+                if inModelDetails:
+                    oldPost["models"] = newModels
+                    db.modeldetails.update_one({"username": username}, {"$set": dict(oldPost)}, upsert=True)
+                    return {'info': 1, 'details': 'Removed from Trained Models'}
+                else:
+                    #Remove from trainstatus
+                    db.trainstatus.delete_one({"username": username, "modelname": modelname })
+                    return {'info': 1, 'details': 'Removed from StatusList'}
+                
         except Exception as e:
             return {'info': -1, 'details': str(e)}
                 
@@ -177,7 +279,7 @@ class ColumnsInfos(Resource):
         dataset = data["dataset"]
         
         try:
-            if(MakeValidations(username, password, 'columnsinfos')):
+            if(MakeValidations(username, password, 'columnsInfos')):
                 data_frame = pd.DataFrame(dataset, columns = columns)
                 data_frame = data_frame[columns].apply(pd.to_numeric, errors="ignore")
                 
@@ -300,6 +402,7 @@ api.add_resource(ModelList, '/modelList')
 api.add_resource(Predict, '/predict')
 api.add_resource(CheckTrainStatus, '/checkStatus')
 api.add_resource(RemoveModel, '/removeModel')
+api.add_resource(GetUserPlan, 'getUserPlan')
 
 if __name__ == '__main__':
     app.run(debug = False)
