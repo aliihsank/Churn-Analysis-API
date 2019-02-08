@@ -1,6 +1,6 @@
 from churnapi import api
 from flask import request
-from flask.ext import restful
+from flask_restful import Resource
 
 from sklearn.preprocessing import StandardScaler
 
@@ -115,12 +115,12 @@ def LoadModelFrom(modelPath):
     return loaded_model
     
 
-class Test(restful.Resource):
+class Test(Resource):
     def get(self):
         return {'Test Message': "Hello User"}
             
 
-class Register(restful.Resource):
+class Register(Resource):
     def post(self):
         data = request.get_json()
         
@@ -151,7 +151,7 @@ class Register(restful.Resource):
     
 
 
-class UpdateUserPlan(restful.Resource):
+class UpdateUserPlan(Resource):
     def post(self):
         data = request.get_json()
         
@@ -188,7 +188,7 @@ class UpdateUserPlan(restful.Resource):
     
     
     
-class Login(restful.Resource):
+class Login(Resource):
     def post(self):
         data = request.get_json()
         
@@ -207,7 +207,7 @@ class Login(restful.Resource):
             return {'info': -1, 'details': str(e)}
 
 
-class GetUserPlan(restful.Resource):
+class GetUserPlan(Resource):
     def post(self):
         data = request.get_json()
         
@@ -227,7 +227,7 @@ class GetUserPlan(restful.Resource):
 
 
 
-class CheckTrainStatus(restful.Resource):
+class CheckTrainStatus(Resource):
     def post(self):
         data = request.get_json()
 
@@ -254,7 +254,7 @@ class CheckTrainStatus(restful.Resource):
             
 
 
-class RemoveModel(restful.Resource):
+class RemoveModel(Resource):
     def post(self):
         data = request.get_json()
         
@@ -296,7 +296,7 @@ class RemoveModel(restful.Resource):
                 
 
 
-class ColumnsInfos(restful.Resource):
+class ColumnsInfos(Resource):
     def post(self):
         data = request.get_json()
         
@@ -329,7 +329,7 @@ class ColumnsInfos(restful.Resource):
      
 
 
-class Train(restful.Resource):
+class Train(Resource):
     def post(self):
         data = request.get_json()
         
@@ -367,7 +367,7 @@ class Train(restful.Resource):
             return {'info': -1, 'details': str(e)}
         
         
-class ModelList(restful.Resource):
+class ModelList(Resource):
     def post(self):
         data = request.get_json()
         
@@ -390,7 +390,7 @@ class ModelList(restful.Resource):
             return {'info': -1, 'details': str(e)}        
 
         
-class Predict(restful.Resource):
+class Predict(Resource):
     def post(self):
         data = request.get_json()
         
