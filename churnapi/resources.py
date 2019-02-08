@@ -15,7 +15,7 @@ import pickle
 import pymongo
 import boto3
 
-from GMS import GMS
+import GMS
 
 
 
