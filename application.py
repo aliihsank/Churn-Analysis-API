@@ -22,7 +22,6 @@ dburi = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.n
 
 
 app = Flask(__name__)
-app.debug = False
 api = Api(app)
 CORS(app)
 
@@ -440,6 +439,5 @@ api.add_resource(UpdateUserPlan, '/updateUserPlan')
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
-    print("main'den çalışıyor...")
     
     
