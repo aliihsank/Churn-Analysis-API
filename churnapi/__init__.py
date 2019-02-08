@@ -7,3 +7,7 @@ api = Api(app)
 CORS(app)
 
 import churnapi.resources
+
+if __name__ == '__main__':
+    print("Main started.")
+    
