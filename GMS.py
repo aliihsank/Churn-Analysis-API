@@ -11,6 +11,8 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 
+from sklearn.decomposition import KernelPCA
+
 import keras
 from keras.models import Sequential
 from keras.layers import Dense
@@ -49,6 +51,7 @@ class GMS:
         self.modeldetails = self.db.modeldetails
         self.trainstatus = self.db.trainstatus
         self.ss = StandardScaler()
+        self.kpca = KernelPCA(n_components = 2, kernel = 'rbf')
     
     
     def SaveTrainStatus(self, status, detail):
@@ -143,7 +146,12 @@ class GMS:
         ''' Scale vars '''
         self.X_train = self.ss.fit_transform(self.X_train)
         self.X_test = self.ss.transform(self.X_test)
-    
+        
+        ''' Applying Kernel PCA - Dimensionality Reduction '''
+        self.X_train = self.kpca.fit_transform(self.X_train)
+        self.X_test = self.kpca.fit(self.X_test)
+        
+
     
     '''Encoding categorical data'''
     def EncodeCategoricalVars(self):
