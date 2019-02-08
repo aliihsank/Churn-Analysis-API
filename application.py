@@ -438,5 +438,6 @@ api.add_resource(UpdateUserPlan, '/updateUserPlan')
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
+    print("main'den çalışıyor...")
     
     
