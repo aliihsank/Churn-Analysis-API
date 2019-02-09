@@ -18,7 +18,6 @@ import boto3
 from .GMS import GMS
 
 
-
 dburi = MONGO_URL
 
 
@@ -58,7 +57,7 @@ def ValidateUserPlan(username, requestedMethod):
         -modellist : Unlimited
         -predict : 10 (Single or Multiple)
         
-    Hobbiest:
+    Hobbyist:
         -X Dollar
         -checkTrainStatus : Unlimited
         -removeModel : Unlimited
@@ -118,6 +117,16 @@ def LoadModelFrom(modelPath):
 class Test(Resource):
     def get(self):
         return {'Test Message': "Hello User"}
+
+
+class MainPage(Resource):
+    def get(self):
+        
+        author = "Ali İhsan Karabal"
+        definition = "This is Churn Analysis Project's Backend"
+        methods = [{"Method": "GET", "URL": "/"}, {"Method": "GET", "URL": "/test"}]
+        
+        return {"author": author, "definition": definition, "methods": methods}
             
 
 class Register(Resource):
@@ -336,7 +345,6 @@ class Train(Resource):
         username = data["username"]
         password = data["password"]
         modelname = data["modelname"]
-        isCustomized = data["isCustomized"]
         
         try:
             if(MakeValidations(username, password, 'train')):
@@ -358,7 +366,7 @@ class Train(Resource):
                 else:
                     gms = GMS(data)
                     
-                    run = Thread(target = gms.Run, args = (isCustomized,))
+                    run = Thread(target = gms.Run, args = ())
                     run.start()
                     return {'info': 1}
             else:
@@ -419,7 +427,7 @@ class Predict(Resource):
             return {'info': -1, 'details': str(e)}
         
         
-        
+api.add_resource(MainPage, '/')
 api.add_resource(ColumnsInfos, '/columnsInfos')
 api.add_resource(Train, '/train')
 api.add_resource(Test, '/test')
