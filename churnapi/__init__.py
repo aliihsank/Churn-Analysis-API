@@ -5,9 +5,9 @@ from flask_restful import Resource, Api
 
 app = Flask(__name__)
 app.debug = False
-MONGO_URL = os.environ.get('MONGO_URL')
 api = Api(app)
 CORS(app)
 
+MONGO_URL = os.environ.get('MONGO_URL')
+
 import churnapi.resources
-    
