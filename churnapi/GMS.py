@@ -370,6 +370,9 @@ class GMS:
     def GenerateModels(self):
         modelType = self.data["modelType"]
         
+        print("ModelType: ")
+        print(self.data["modelType"])
+        
         if modelType:
             if(modelType == "LogisticRegression"):
                 self.LogisticRegression()
