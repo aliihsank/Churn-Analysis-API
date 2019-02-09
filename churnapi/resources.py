@@ -114,10 +114,6 @@ def LoadModelFrom(modelPath):
     return loaded_model
     
 
-class Test(Resource):
-    def get(self):
-        return {'Test Message': "Hello User"}
-
 
 class MainPage(Resource):
     def get(self):
@@ -128,6 +124,11 @@ class MainPage(Resource):
         
         return {"author": author, "definition": definition, "methods": methods}
             
+
+class Test(Resource):
+    def get(self):
+        return {'Test Message': "Hello User"}
+    
 
 class Register(Resource):
     def post(self):
@@ -158,6 +159,46 @@ class Register(Resource):
             except Exception as e:
                 return {'info': -1, 'details': str(e)}
     
+    
+    
+class Login(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        username = data["username"]
+        password = data["password"]
+        
+        try:
+            client = pymongo.MongoClient(dburi, ssl=True)
+            db = client.churndb
+            
+            if db.userdetails.find_one({"username": username, "password": password}) is None:
+                return {'info': '0'}
+            else:
+                return {'info': '1'}
+        except Exception as e:
+            return {'info': -1, 'details': str(e)}
+
+
+
+class GetUserPlan(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        username = data["username"]
+        password = data["password"]
+        
+        try:
+            client = pymongo.MongoClient(dburi, ssl=True)
+            db = client.churndb
+            
+            userdetails = db.userdetails.find_one({"username": username, "password": password}, {'_id': 0})
+            
+            return {'info': 1, 'user': userdetails}
+            
+        except Exception as e:
+            return {'info': -1, 'details': str(e)}
+
 
 
 class UpdateUserPlan(Resource):
@@ -195,28 +236,112 @@ class UpdateUserPlan(Resource):
         except Exception as e:
             return {'info': -1, 'details': str(e)}
     
-    
-    
-class Login(Resource):
+
+
+
+class ColumnsInfos(Resource):
     def post(self):
         data = request.get_json()
         
         username = data["username"]
         password = data["password"]
+        columns = data["columns"]
+        dataset = data["dataset"]
         
         try:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-            
-            if db.userdetails.find_one({"username": username, "password": password}) is None:
-                return {'info': '0'}
+            if(MakeValidations(username, password, 'columnsInfos')):
+                data_frame = pd.DataFrame(dataset, columns = columns)
+                data_frame = data_frame[columns].apply(pd.to_numeric, errors="ignore")
+                
+                colInfos = []
+                
+                for i in range(len(columns)):
+                    cat = 0
+                    if(data_frame.iloc[:,[i]].values.dtype is np.dtype("object")):
+                        cat = 1
+                    
+                    counterObj = data_frame.iloc[:, i].value_counts()
+                    
+                    colInfos.append({"name": columns[i], "values": counterObj.keys().tolist(), "counts": counterObj.tolist(), "cat": cat })
+                    
+                return {'info': 1, 'colInfos': colInfos}
             else:
-                return {'info': '1'}
+                return {'info': 0}
         except Exception as e:
             return {'info': -1, 'details': str(e)}
+     
 
 
-class GetUserPlan(Resource):
+class Train(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        username = data["username"]
+        password = data["password"]
+        modelname = data["modelname"]
+        
+        try:
+            if(MakeValidations(username, password, 'train')):
+                client = pymongo.MongoClient(dburi, ssl=True)
+                db = client.churndb
+                
+                modelnameExists = False
+                usermodelsInfo = db.modeldetails.find_one({"username": username })
+                if usermodelsInfo is not None:
+                    for model in usermodelsInfo["models"]:
+                        if(modelname == model["modelname"]):
+                            modelnameExists = True
+                usermodelsInfo = db.trainstatus.find_one({"username": username, "modelname": modelname })
+                if usermodelsInfo is not None:
+                    if usermodelsInfo["status"] == 0:
+                        return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
+                if modelnameExists:
+                    return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
+                else:
+                    gms = GMS(data)
+                    
+                    run = Thread(target = gms.Run, args = ())
+                    run.start()
+                    return {'info': 1}
+            else:
+                return {'info': 0, 'details': 'Your have reached your limit.'}
+        except Exception as e:
+            return {'info': -1, 'details': str(e)}
+            
+
+        
+class Predict(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        username = data["username"]
+        password = data["password"]
+        modelname = data["modelname"]
+        predictset = data["predictset"]
+        
+        try:
+            #Load Model
+            if(MakeValidations(username, password, 'predict')):
+                #Load Model
+                model = LoadModelFrom(username + modelname + ".txt")
+            
+                #Feature Scaling (predictset comes onehotencoded)
+                ss = LoadScalerFrom(username + modelname + "scaler.txt")
+                predictset = ss.transform(predictset)
+                
+                #Make prediction
+                result = model.predict(predictset).tolist()
+                #Return result
+                return {'info': 1, 'prediction': result}
+            else:
+                return {"info": 0}
+        except Exception as e:
+            return {'info': -1, 'details': str(e)}
+ 
+    
+
+        
+class ModelList(Resource):
     def post(self):
         data = request.get_json()
         
@@ -224,16 +349,21 @@ class GetUserPlan(Resource):
         password = data["password"]
         
         try:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-            
-            userdetails = db.userdetails.find_one({"username": username, "password": password})
-            
-            return {'info': 1, 'user': userdetails}
-            
+            if(MakeValidations(username, password, 'modellist')):
+                client = pymongo.MongoClient(dburi, ssl=True)
+                db = client.churndb
+                
+                if db.modeldetails.find_one({"username": username}, {'_id': 0}) is None:
+                    return {"info": 0}
+                else:
+                    post = db.modeldetails.find_one({"username": username}, {'_id': 0})
+                    return {"info": 1, "models": post["models"]}
+            else:
+                return {"info": 0}
         except Exception as e:
-            return {'info': -1, 'details': str(e)}
+            return {'info': -1, 'details': str(e)}        
 
+    
 
 
 class CheckTrainStatus(Resource):
@@ -305,137 +435,22 @@ class RemoveModel(Resource):
                 
 
 
-class ColumnsInfos(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        username = data["username"]
-        password = data["password"]
-        columns = data["columns"]
-        dataset = data["dataset"]
-        
-        try:
-            if(MakeValidations(username, password, 'columnsInfos')):
-                data_frame = pd.DataFrame(dataset, columns = columns)
-                data_frame = data_frame[columns].apply(pd.to_numeric, errors="ignore")
-                
-                colInfos = []
-                
-                for i in range(len(columns)):
-                    cat = 0
-                    if(data_frame.iloc[:,[i]].values.dtype is np.dtype("object")):
-                        cat = 1
-                    
-                    counterObj = data_frame.iloc[:, i].value_counts()
-                    
-                    colInfos.append({"name": columns[i], "values": counterObj.keys().tolist(), "counts": counterObj.tolist(), "cat": cat })
-                    
-                return {'info': 1, 'colInfos': colInfos}
-            else:
-                return {'info': 0}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
      
-
-
-class Train(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        username = data["username"]
-        password = data["password"]
-        modelname = data["modelname"]
-        
-        try:
-            if(MakeValidations(username, password, 'train')):
-                client = pymongo.MongoClient(dburi, ssl=True)
-                db = client.churndb
-                
-                modelnameExists = False
-                usermodelsInfo = db.modeldetails.find_one({"username": username })
-                if usermodelsInfo is not None:
-                    for model in usermodelsInfo["models"]:
-                        if(modelname == model["modelname"]):
-                            modelnameExists = True
-                usermodelsInfo = db.trainstatus.find_one({"username": username, "modelname": modelname })
-                if usermodelsInfo is not None:
-                    if usermodelsInfo["status"] == 0:
-                        return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
-                if modelnameExists:
-                    return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
-                else:
-                    gms = GMS(data)
-                    
-                    run = Thread(target = gms.Run, args = ())
-                    run.start()
-                    return {'info': 1}
-            else:
-                return {'info': 0, 'details': 'Your have reached your limit.'}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
-        
-        
-class ModelList(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        username = data["username"]
-        password = data["password"]
-        
-        try:
-            if(MakeValidations(username, password, 'modellist')):
-                client = pymongo.MongoClient(dburi, ssl=True)
-                db = client.churndb
-                
-                if db.modeldetails.find_one({"username": username}, {'_id': 0}) is None:
-                    return {"info": 0}
-                else:
-                    post = db.modeldetails.find_one({"username": username}, {'_id': 0})
-                    return {"info": 1, "models": post["models"]}
-            else:
-                return {"info": 0}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}        
-
-        
-class Predict(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        username = data["username"]
-        password = data["password"]
-        modelname = data["modelname"]
-        predictset = data["predictset"]
-        
-        try:
-            #Load Model
-            if(MakeValidations(username, password, 'predict')):
-                #Load Model
-                model = LoadModelFrom(username + modelname + ".txt")
-            
-                #Feature Scaling (predictset comes onehotencoded)
-                ss = LoadScalerFrom(username + modelname + "scaler.txt")
-                predictset = ss.transform(predictset)
-                
-                #Make prediction
-                result = model.predict(predictset).tolist()
-                #Return result
-                return {'info': 1, 'prediction': result}
-            else:
-                return {"info": 0}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
-        
         
 api.add_resource(MainPage, '/')
-api.add_resource(ColumnsInfos, '/columnsInfos')
-api.add_resource(Train, '/train')
 api.add_resource(Test, '/test')
+
 api.add_resource(Register, '/register')
 api.add_resource(Login, '/login')
-api.add_resource(ModelList, '/modelList')
-api.add_resource(Predict, '/predict')
-api.add_resource(CheckTrainStatus, '/checkStatus')
-api.add_resource(RemoveModel, '/removeModel')
+
 api.add_resource(GetUserPlan, '/getUserPlan')
 api.add_resource(UpdateUserPlan, '/updateUserPlan')
+
+api.add_resource(ColumnsInfos, '/columnsInfos')
+api.add_resource(Train, '/train')
+api.add_resource(Predict, '/predict')
+
+api.add_resource(ModelList, '/modelList')
+api.add_resource(CheckTrainStatus, '/checkStatus')
+api.add_resource(RemoveModel, '/removeModel')
+
