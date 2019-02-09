@@ -366,13 +366,12 @@ class GMS:
                 self.algorithm = "Neural Network"
 
 
+
     '''Generates given model type with different parameters and assigns highest acc. model'''
     def GenerateModels(self):
-        modelType = self.data["modelType"]
         
-        print("ModelType: ")
-        print(self.data["modelType"])
-        
+        modelType = self.data['modelType'] if 'modelType' in self.data else None
+            
         if modelType:
             if(modelType == "LogisticRegression"):
                 self.LogisticRegression()
