@@ -367,8 +367,10 @@ class GMS:
 
 
     '''Generates given model type with different parameters and assigns highest acc. model'''
-    def GenerateModels(self, modelType, isCustomized = 0):
-        if isCustomized == 1:
+    def GenerateModels(self):
+        modelType = self.data["modelType"]
+        
+        if modelType:
             if(modelType == "LogisticRegression"):
                 self.LogisticRegression()
             elif(modelType == "KNN"):
@@ -393,57 +395,54 @@ class GMS:
             
         else:
             
-            if(modelType == "LogisticRegression"):
-                self.LogisticRegression()
-            elif(modelType == "KNN"):
-                for numofneighbour in range(3,7):
-                    for p in range(1,5):
-                        for metric in ["minkowski"]:
-                            self.KNN(numofneighbour, metric, p)        
-            elif(modelType == "NaiveBayes"):
-                self.NaiveBayes()
-            elif(modelType == "KernelSVM"):
-                for kernel in ["linear", "poly", "rbf", "sigmoid"]:
-                    self.KernelSVM(kernel)
-            elif(modelType == "DecisionTree"):
+            #Logistic Regression Models
+            self.LogisticRegression()
+            
+            #KNN Models
+            for numofneighbour in range(3,7):
+                for p in range(1,5):
+                    for metric in ["minkowski"]:
+                        self.KNN(numofneighbour, metric, p)
+                        
+            #Naive Bayes Models
+            self.NaiveBayes()
+            
+            #Kernel SVM Models
+            for kernel in ["linear", "poly", "rbf", "sigmoid"]:
+                self.KernelSVM(kernel)
+                
+            #Decision Tree Models
+            for criterion in ["gini", "entropy"]:
+                self.DecisionTree(criterion)
+                
+            #Random Forest Models
+            for estimators in range(8,14):
                 for criterion in ["gini", "entropy"]:
-                    self.DecisionTree(criterion)
-            elif(modelType == "RandomForest"):
-                for estimators in range(8,14):
-                    for criterion in ["gini", "entropy"]:
-                        self.RandomForest(estimators, criterion)
-            elif(modelType == "ArtificialNeuralNetwork"):
-                self.ArtificialNeuralNetwork()
+                    self.RandomForest(estimators, criterion)
+            
+            #Neural Network Models
+            self.ArtificialNeuralNetwork()
     
     
-    def Run(self, isCustomized = 0):
+    def Run(self):
         
         try:
             ''' Save status '''
             self.SaveTrainStatus(0, 'Preprocess Starting...')
                 
-            '''Preprocess dataset'''
+            #Preprocess dataset
             self.Preprocess()
                 
             ''' Save status '''
             self.SaveTrainStatus(0, 'Preprocess Finished.GMS Starting...')
     
-            '''Create models, find best model'''
-            if isCustomized == 1:
-                self.GenerateModels(self.data["modelType"], isCustomized = 1)
-            else:
-                self.GenerateModels("LogisticRegression")
-                self.GenerateModels("KNN")
-                self.GenerateModels("NaiveBayes")
-                self.GenerateModels("KernelSVM")
-                self.GenerateModels("DecisionTree")
-                self.GenerateModels("RandomForest")
-                self.GenerateModels("ArtificialNeuralNetwork")
+            #Create models, find best model
+            self.GenerateModels()
                 
             ''' Save status '''
             self.SaveTrainStatus(0, 'GMS Finished.Best model is being saved.')
             
-            ''' Save the best model '''
+            #Save the best model
             self.SaveModel()
                 
             ''' Save status '''
@@ -451,6 +450,7 @@ class GMS:
                 
             print("GMS Finished Successfuly !")
         except Exception as e:
+            
             ''' Save status '''
             self.SaveTrainStatus(-1, 'GMS Finished with errors: ' + str(e))
             
