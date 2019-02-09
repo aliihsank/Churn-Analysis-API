@@ -370,8 +370,8 @@ class GMS:
     '''Generates given model type with different parameters and assigns highest acc. model'''
     def GenerateModels(self):
         
-        modelType = self.data['modelType'] if 'modelType' in self.data else None
-            
+        modelType = self.data.get('modelType')
+        
         if modelType:
             if(modelType == "LogisticRegression"):
                 self.LogisticRegression()
