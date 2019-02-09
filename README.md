@@ -16,21 +16,27 @@
 - AWS S3 for file storage
 - Keras for neural network construction
 - Tensorflow as backend to Keras
--------------------------------
+
+## METHODS ##
 
 It has following methods that can be requested:
 
+- MainPage ()
 - Test ()           
+
 - Register (email, username, password)
 - Login (username, password)
-- ColumnsInfos (username, password, columns, dataset)
-- Train (username, password, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns, isCustomized, {classifier specific variables})
-- ModelList(username, password)
-- Predict (username, password, modelname, predictset)
-- CheckTrainStatus (username, password)
-- RemoveModel (username, password, modelname)
+
 - GetUserPlan (username, password)
 - UpdateUserPlan (username, password, usertype)
+
+- ColumnsInfos (username, password, columns, dataset)
+- Train (username, password, modelname, dataset, columns, target, categoricalcolumns, numericalcolumns, modelType = None, {classifier specific variables})
+- Predict (username, password, modelname, predictset)
+
+- ModelList(username, password)
+- CheckTrainStatus (username, password)
+- RemoveModel (username, password, modelname)
 
 ## GMS Module Details ##
 
@@ -49,7 +55,10 @@ Live version of this code is in:
 
 https://churn-analysis-api.herokuapp.com/
 
+
 You can send requests to following URLs:
+
+GET https://churn-analysis-api.herokuapp.com/
 
 GET https://churn-analysis-api.herokuapp.com/test
 
@@ -59,24 +68,27 @@ POST https://churn-analysis-api.herokuapp.com/register
 POST https://churn-analysis-api.herokuapp.com/login
 
 
-POST https://churn-analysis-api.herokuapp.com/columnsInfos
-
-POST https://churn-analysis-api.herokuapp.com/train
-
-POST https://churn-analysis-api.herokuapp.com/modelList
-
-POST https://churn-analysis-api.herokuapp.com/predict
-
-POST https://churn-analysis-api.herokuapp.com/checkStatus
-
-POST https://churn-analysis-api.herokuapp.com/removeModel
-
 POST https://churn-analysis-api.herokuapp.com/getUserPlan
 
 POST https://churn-analysis-api.herokuapp.com/updateUserPlan
 
 
+POST https://churn-analysis-api.herokuapp.com/columnsInfos
+
+POST https://churn-analysis-api.herokuapp.com/train
+
+POST https://churn-analysis-api.herokuapp.com/predict
+
+
+POST https://churn-analysis-api.herokuapp.com/modelList
+
+POST https://churn-analysis-api.herokuapp.com/checkStatus
+
+POST https://churn-analysis-api.herokuapp.com/removeModel
+
+
+
 ### TODOs: ###
-- Add auto splitting support for irrelevant columns
+- Convolutional Neural Network Option
 - Optimization
 - Encapsulation
