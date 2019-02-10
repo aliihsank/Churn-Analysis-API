@@ -331,12 +331,14 @@ class Predict(Resource):
                 
                 #Make prediction
                 ''' Formatted to return true results for NN '''
+                model.predict(predictset)
                 result = [int(i > 0.5) for i in model.predict(predictset).tolist()]
                 #Return result
                 return {'info': 1, 'prediction': result}
             else:
                 return {"info": 0}
         except Exception as e:
+            print("Hataaa: " + str(e))
             return {'info': -1, 'details': str(e)}
  
     
