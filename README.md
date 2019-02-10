@@ -89,6 +89,8 @@ POST https://churn-analysis-api.herokuapp.com/removeModel
 
 
 ### TODOs: ###
-- Convolutional Neural Network Option
+- XGBoost Option
+- Save no model if every model becomes unsuccessful
+- Model Spesific Serialization/Deserialization bugfix
 - Optimization
 - Encapsulation
