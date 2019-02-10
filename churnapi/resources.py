@@ -330,7 +330,8 @@ class Predict(Resource):
                 predictset = ss.transform(predictset)
                 
                 #Make prediction
-                result = model.predict(predictset).tolist()
+                ''' Formatted to return true results for NN '''
+                result = [i > 0.5 for i in model.predict(predictset).tolist()] 
                 #Return result
                 return {'info': 1, 'prediction': result}
             else:
