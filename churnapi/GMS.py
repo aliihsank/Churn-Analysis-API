@@ -334,7 +334,13 @@ class GMS:
         
         self.CheckHighScore(acc_variance, acc_avg, "Random Forest", classifier)
             
-            
+        
+    
+    def XGBoost(self):
+        asd =5
+        return True
+        
+        
     def ArtificialNeuralNetwork(self):
         
         numOfCols = len(self.X[0])
@@ -403,6 +409,8 @@ class GMS:
                 estimators = self.data["estimators"]
                 criterion = self.data["criterion"]
                 self.RandomForest(estimators, criterion)
+            elif(modelType == "XGBoost"):
+                self.XGBoost()
             elif(modelType == "ArtificialNeuralNetwork"):
                 self.ArtificialNeuralNetwork()
             
@@ -432,6 +440,9 @@ class GMS:
             for estimators in range(8,14):
                 for criterion in ["gini", "entropy"]:
                     self.RandomForest(estimators, criterion)
+            
+            #XGBoost Models
+            self.XGBoost()
             
             #Neural Network Models
             self.ArtificialNeuralNetwork()
