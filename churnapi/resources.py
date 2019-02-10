@@ -333,6 +333,7 @@ class Predict(Resource):
                 ss = LoadScalerFrom(username + modelname + "scaler.txt")
                 
                 print("geldi4")
+                print(predictset)
                 predictset = ss.transform(predictset)
                 
                 #Make prediction
