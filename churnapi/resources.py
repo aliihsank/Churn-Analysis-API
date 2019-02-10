@@ -320,34 +320,25 @@ class Predict(Resource):
         predictset = data["predictset"]
         
         try:
-            print("geldi1")
             #Load Model
             if(MakeValidations(username, password, 'predict')):
                 #Load Model
-                
-                print("geldi2")
                 model = LoadModelFrom(username + modelname + ".txt")
             
-                print("geldi3")
                 #Feature Scaling (predictset comes onehotencoded)
                 ss = LoadScalerFrom(username + modelname + "scaler.txt")
-                
-                print("geldi4")
-                print(predictset)
                 predictset = ss.transform(predictset)
                 
                 #Make prediction
                 ''' Formatted to return true results for NN '''
-                print("geldi5")
                 result = model.predict(predictset).tolist()
-                print(result)
                 #result = [int(i > 0.5) for i in model.predict(predictset).tolist()]
                 #Return result
                 return {'info': 1, 'prediction': result}
             else:
                 return {"info": 0}
         except Exception as e:
-            print("Hataaa: " + str(e))
+            print("Hata: " + str(e))
             return {'info': -1, 'details': str(e)}
  
     
