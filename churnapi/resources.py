@@ -438,8 +438,6 @@ class RemoveModel(Resource):
         except Exception as e:
             return {'info': -1, 'details': str(e)}
                 
-
-
      
         
 api.add_resource(MainPage, '/')
