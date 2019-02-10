@@ -1,12 +1,22 @@
-from churnapi import api, MONGO_URL
-from flask import request
-from flask_restful import Resource
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler, Imputer
 
-from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
-from datetime import datetime, timedelta
+from sklearn.metrics import accuracy_score
 
-from threading import Thread
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+
+import xgboost as xgb
+
+from sklearn.decomposition import KernelPCA
+
+from keras.models import Sequential
+from keras.layers import Dense
 
 import pandas as pd
 import numpy as np
@@ -15,445 +25,463 @@ import pickle
 import pymongo
 import boto3
 
-from .GMS import GMS
 
-
-dburi = MONGO_URL
-
-
-def MakeValidations(username, password, requestedMethod):
-    if (ValidateUser(username, password)):
-        if(ValidateUserPlan(username, requestedMethod)):
-            return True
-        
-    return False
-
-
-def ValidateUser(username, password):
-    client = pymongo.MongoClient(dburi, ssl=True)
-    db = client.churndb
-            
-    if db.userdetails.find_one({"username": username, "password": password}) is None:
-        return False
-    else:
-        return True
+class GMS:
+    
+    maxScore = 0
+    bestModel = ""
+    algorithm = ""
+    
+    maxScoreWithHighVariance = 0
+    bestModelWithHighVariance = ""
+    algorithmWithHighVariance = ""
+    
+    modelName = ""
+    userName = ""
+    
+    dburi = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
     
     
-def ValidateUserPlan(username, requestedMethod):
-    
-    """
-    User Attributes:
-        -User Type
-        -columnsInfos
-        -train
-        -predict
+    def __init__(self, data):
+        self.name = ''
+        self.data = data
+        self.userName = data["username"]
+        self.modelName = data["modelname"]
+        self.dataset = data["dataset"]
+        self.columns = data["columns"]
+        self.target = data["target"]
+        self.categoricalcolumns = data["categoricalcolumns"]
+        self.numericalcolumns = data["numericalcolumns"]
         
-    Beginner:
-        -Free
-        -checkTrainStatus : Unlimited
-        -removeModel : Unlimited
-        -columnsInfos : 2
-        -train : 2
-        -modellist : Unlimited
-        -predict : 10 (Single or Multiple)
-        
-    Hobbyist:
-        -X Dollar
-        -checkTrainStatus : Unlimited
-        -removeModel : Unlimited
-        -columnsInfos : 5
-        -train : 5
-        -modellist : Unlimited
-        -predict : 20 (Single or Multiple)
+        self.client = pymongo.MongoClient(self.dburi, ssl=True)
+        self.db = self.client.churndb
+        self.modeldetails = self.db.modeldetails
+        self.trainstatus = self.db.trainstatus
+        self.ss = StandardScaler()
+        self.kpca = KernelPCA(n_components = 2, kernel = 'rbf')
     
     
-    Professional:
-        -2X Dollar
-        -checkTrainStatus : Unlimited
-        -removeModel : Unlimited
-        -columnsInfos : 10
-        -train : 10
-        -modellist : Unlimited
-        -predict : 40 (Single or Multiple)
-    
-    """
-    if requestedMethod == "columnsInfos" or requestedMethod == "train" or requestedMethod == "predict":
-        client = pymongo.MongoClient(dburi, ssl=True)
-        db = client.churndb
-        
-        oldPost = db.userdetails.find_one({"username": username})
-        
-        try:
-            if oldPost["endDate"] > datetime.now():
-                if oldPost[requestedMethod] > 0:
-                    oldPost[requestedMethod] -= 1
-                    db.userdetails.update_one({"username": username}, {"$set": dict(oldPost)}, upsert=True)
-                    return True
-                else:
-                    return False
-            else:
-                return False
-        except Exception as e:
-            return False
-    else:
-        return True
-        
-    
-        
-def LoadScalerFrom(scalerPath):
-    s3 = boto3.resource("s3").Bucket("churn-bucket")
-    scaler = pickle.loads(s3.Object(key=scalerPath).get()["Body"].read())
-    
-    return scaler
-
-
-def LoadModelFrom(modelPath):
-    s3 = boto3.resource("s3").Bucket("churn-bucket")
-    loaded_model = pickle.loads(s3.Object(key=modelPath).get()["Body"].read())
-    
-    return loaded_model
-    
-
-
-class MainPage(Resource):
-    def get(self):
-        
-        author = "Ali İhsan Karabal"
-        definition = "This is Churn Analysis Project's Backend"
-        methods = [{"Method": "GET", "URL": "/"}, {"Method": "GET", "URL": "/test"}]
-        
-        return {"author": author, "definition": definition, "methods": methods}
-            
-
-class Test(Resource):
-    def get(self):
-        return {'Test Message': "Hello User"}
-    
-
-class Register(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        email = data["email"]
-        username = data["username"]
-        password = data["password"]
-        
-        usertype = "Beginner"
-        columnsInfos = 2
-        train = 2
-        predict = 10
-        
-        if email is None or username is None or password is None:
-            return {'info': '0'}
+    def SaveTrainStatus(self, status, detail):
+        if status == 1:
+            self.trainstatus.delete_one({"username": self.userName, "modelname": self.modelName})            
         else:
-            try:
-                client = pymongo.MongoClient(dburi, ssl=True)
-                db = client.churndb
-                
-                if db.userdetails.find_one({"username": username}) is None:
-                    post = { "email":email, "username": username, "password":password, "usertype": usertype, "columnsInfos": columnsInfos, "train": train, "predict": predict, "endDate": (datetime.now() + timedelta(days=365)) }
-                    db.userdetails.insert_one(post)
-                    return {'info': 1}
-                else:
-                    return {'info': 0}
-            except Exception as e:
-                return {'info': -1, 'details': str(e)}
+            oldPost = {"username": self.userName, "modelname": self.modelName, "status": status, "detail": detail}
+            self.trainstatus.update_one({"username": self.userName, "modelname": self.modelName}, {"$set": oldPost}, upsert=True)
     
     
+    def SaveModel(self):
+        '''Save best model to memory'''
+        self.SaveModelToMemory()
+        
+        '''Save the bestModel path to database'''
+        self.SaveModelToDB()
+        
     
-class Login(Resource):
-    def post(self):
-        data = request.get_json()
+    def SaveModelToDB(self):
+        oldPost = self.modeldetails.find_one({"username":  self.userName })
         
-        username = data["username"]
-        password = data["password"]
+        catCols = []
+        for catColIndex in self.categoricalcolumns:
+            catCols.append(dict({ "name": self.columns[catColIndex], "values": sorted(pd.unique(self.data_frame.iloc[:, catColIndex].values).tolist()) }))
         
-        try:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
+        numCols = []
+        for numColIndex in self.numericalcolumns:
+            numCols.append(self.columns[numColIndex])
             
-            if db.userdetails.find_one({"username": username, "password": password}) is None:
-                return {'info': '0'}
-            else:
-                return {'info': '1'}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
-
-
-
-class GetUserPlan(Resource):
-    def post(self):
-        data = request.get_json()
+        targetCol = dict({ "name": self.columns[self.target], "values": sorted(pd.unique(self.data_frame.iloc[:, self.target].values).tolist()) })
         
-        username = data["username"]
-        password = data["password"]
+        newModel = {"modelname": self.modelName, "catCols": catCols , "numCols": numCols, "targetCol": targetCol, "algorithm": self.algorithm, "accuracy": self.maxScore}
         
-        try:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-            
-            userdetails = db.userdetails.find_one({"username": username, "password": password}, {'_id': 0})
-            
-            return {'info': 1, 'user': userdetails}
-            
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
-
-
-
-class UpdateUserPlan(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        username = data["username"]
-        password = data["password"]
-        usertype = data["usertype"]
-        
-        if usertype == "Hobbiest":
-            columnsInfos = 5
-            train = 5
-            predict = 20
-        elif usertype == "Professional":
-            columnsInfos = 10
-            train = 10
-            predict = 40
+        if oldPost is None:
+            '''User doesn't have any model previously '''
+            oldPost = {"username": self.userName, "models": [dict(newModel)]}
         else:
-            return {'info': 0}
-            
-        try:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-                
-            oldPost = db.userdetails.find_one({"username": username, "password": password})
-            oldPost["usertype"] = usertype
-            oldPost["columnsInfos"] = columnsInfos
-            oldPost["train"] = train
-            oldPost["predict"] = predict
-            oldPost["endDate"] = (datetime.now() + timedelta(days=365))
-            
-            db.userdetails.update_one({"username": username}, {"$set": dict(oldPost)}, upsert=True)
-            return {'info': 1}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
+            '''User has at least one model before '''
+            prevModels = oldPost["models"]
+            prevModels.append(dict(newModel))
+            oldPost["models"] = prevModels
+        
+        self.modeldetails.update_one({"username": self.userName}, {"$set": dict(oldPost)}, upsert=True)
+        
     
 
-
-
-class ColumnsInfos(Resource):
-    def post(self):
-        data = request.get_json()
+    def SaveModelToMemory(self):
+        modelPath = self.userName + self.modelName + ".txt"
+        scalerPath = self.userName + self.modelName + "scaler.txt"
+        s3 = boto3.resource('s3')
         
-        username = data["username"]
-        password = data["password"]
-        columns = data["columns"]
-        dataset = data["dataset"]
+        bucket_name = 'churn-bucket'
         
-        try:
-            if(MakeValidations(username, password, 'columnsInfos')):
-                data_frame = pd.DataFrame(dataset, columns = columns)
-                data_frame = data_frame[columns].apply(pd.to_numeric, errors="ignore")
-                
-                colInfos = []
-                
-                for i in range(len(columns)):
-                    cat = 0
-                    if(data_frame.iloc[:,[i]].values.dtype is np.dtype("object")):
-                        cat = 1
-                    
-                    counterObj = data_frame.iloc[:, i].value_counts()
-                    
-                    colInfos.append({"name": columns[i], "values": counterObj.keys().tolist(), "counts": counterObj.tolist(), "cat": cat })
-                    
-                return {'info': 1, 'colInfos': colInfos}
-            else:
-                return {'info': 0}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
-     
-
-
-class Train(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        username = data["username"]
-        password = data["password"]
-        modelname = data["modelname"]
-        
-        try:
-            if(MakeValidations(username, password, 'train')):
-                client = pymongo.MongoClient(dburi, ssl=True)
-                db = client.churndb
-                
-                modelnameExists = False
-                usermodelsInfo = db.modeldetails.find_one({"username": username })
-                if usermodelsInfo is not None:
-                    for model in usermodelsInfo["models"]:
-                        if(modelname == model["modelname"]):
-                            modelnameExists = True
-                usermodelsInfo = db.trainstatus.find_one({"username": username, "modelname": modelname })
-                if usermodelsInfo is not None:
-                    if usermodelsInfo["status"] == 0:
-                        return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
-                if modelnameExists:
-                    return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
-                else:
-                    gms = GMS(data)
-                    
-                    run = Thread(target = gms.Run, args = ())
-                    run.start()
-                    return {'info': 1}
-            else:
-                return {'info': 0, 'details': 'Your have reached your limit.'}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
-            
-
-        
-class Predict(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        username = data["username"]
-        password = data["password"]
-        modelname = data["modelname"]
-        predictset = data["predictset"]
-        
-        try:
-            #Load Model
-            if(MakeValidations(username, password, 'predict')):
-                #Load Model
-                model = LoadModelFrom(username + modelname + ".txt")
-            
-                #Feature Scaling (predictset comes onehotencoded)
-                ss = LoadScalerFrom(username + modelname + "scaler.txt")
-                predictset = ss.transform(predictset)
-                
-                #Make prediction
-                ''' Formatted to return true results for NN '''
-                print("geldi")
-                result = model.predict(predictset).tolist()
-                print(result)
-                #result = [int(i > 0.5) for i in model.predict(predictset).tolist()]
-                #Return result
-                return {'info': 1, 'prediction': result}
-            else:
-                return {"info": 0}
-        except Exception as e:
-            print("Hataaa: " + str(e))
-            return {'info': -1, 'details': str(e)}
+        modelInBytes = pickle.dumps(self.bestModel)
+        scalerInBytes = pickle.dumps(self.ss)
  
+        s3.meta.client.put_object(Body=modelInBytes, Bucket=bucket_name, Key=modelPath)
+        s3.meta.client.put_object(Body=scalerInBytes, Bucket=bucket_name, Key=scalerPath)
+        
+    
+    def CheckHighScore(self, acc_variance, acc_avg, algorithm, classifier):
+        if(acc_variance <= 6):
+            if(acc_avg > self.maxScore):
+                self.bestModel = classifier
+                self.maxScore = acc_avg
+                self.algorithm = algorithm
+        else:
+            if(acc_avg > self.maxScoreWithHighVariance):
+                self.bestModelWithHighVariance = classifier
+                self.maxScoreWithHighVariance = acc_avg
+                self.algorithmWithHighVariance = algorithm
     
 
+    def Preprocess(self):        
+        ''' Make dataset a dataframe '''
+        self.data_frame = pd.DataFrame(self.dataset, columns = self.columns)
+        self.data_frame = self.data_frame[self.columns].apply(pd.to_numeric, errors="ignore")
+
+        ''' Handle Missing Values in categorical columns '''
+        for col in self.categoricalcolumns:
+            #print(self.data_frame.iloc[:, col].value_counts())
+            self.data_frame.iloc[:, col].fillna(self.data_frame.iloc[:, col].value_counts().index[0], inplace = True)
         
-class ModelList(Resource):
-    def post(self):
-        data = request.get_json()
+        ''' Assign columns'''
+        self.X = self.data_frame.iloc[:, (self.categoricalcolumns + self.numericalcolumns)].values
+        self.y = self.data_frame.iloc[:, self.target].values
         
-        username = data["username"]
-        password = data["password"]
+        numericalRange = list(range(len(self.categoricalcolumns), len(self.categoricalcolumns) + len(self.numericalcolumns)))
         
-        try:
-            if(MakeValidations(username, password, 'modellist')):
-                client = pymongo.MongoClient(dburi, ssl=True)
-                db = client.churndb
-                
-                if db.modeldetails.find_one({"username": username}, {'_id': 0}) is None:
-                    return {"info": 0}
-                else:
-                    post = db.modeldetails.find_one({"username": username}, {'_id': 0})
-                    return {"info": 1, "models": post["models"]}
-            else:
-                return {"info": 0}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}        
+        ''' Handle Missing Values in numerical columns '''
+        imputer = Imputer(missing_values = 'NaN', strategy = 'mean', axis = 0)
+        imputer.fit(self.X[:, numericalRange])
+        self.X[:, numericalRange] = imputer.transform(self.X[:, numericalRange])
+        
+        ''' Encode categorical vars '''
+        self.EncodeCategoricalVars()
+        
+        ''' Encode y column '''
+        labelEncoder = LabelEncoder()
+        self.y = labelEncoder.fit_transform(self.y)
+        
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size = .25, random_state = 0)
+        
+        ''' Scale vars '''
+        self.X_train = self.ss.fit_transform(self.X_train)
+        self.X_test = self.ss.transform(self.X_test)
+        
+        """
+        ''' Applying Kernel PCA - Dimensionality Reduction '''
+        self.X_train = self.kpca.fit_transform(self.X_train)
+        self.X_test = self.kpca.fit(self.X_test)
+        """
 
     
+    '''Encoding categorical data'''
+    def EncodeCategoricalVars(self):
+        feature_list = []
+        numOfUniqueValsForCatCols = []
+        hasMulticlassCat = False
+        indexZeroAdded = False
+        
+        #Check if there is categorical variable
+        if len(self.categoricalcolumns) != 0:
+            for i in range(0, len(self.categoricalcolumns)):
+                numOfUniqueVals = len(pd.unique(self.X[:, i]).tolist())
+                
+                labelEncoder = LabelEncoder()
+                self.X[:, i] = labelEncoder.fit_transform(self.X[:, i])
+                
+                ''' if there are more than 2 classes then use OHE on it '''
+                if(numOfUniqueVals > 2): 
+                    feature_list.append(i)
+                    if(not indexZeroAdded):
+                        numOfUniqueValsForCatCols.append(0)
+                        indexZeroAdded = True
+                    ''' save number of unique vals for every categorical column '''
+                    numOfUniqueValsForCatCols.append(numOfUniqueValsForCatCols[-1] + numOfUniqueVals)
+                    hasMulticlassCat = True
+            
+            #Remove last index(no need)
+            if(hasMulticlassCat): 
+                del numOfUniqueValsForCatCols[-1]
+                        
+            oneHotEncoder = OneHotEncoder(categorical_features = feature_list, sparse=False)
+            self.X = oneHotEncoder.fit_transform(self.X)
+            
+            '''Remove dummy variable'''
+            self.X = np.delete(self.X, numOfUniqueValsForCatCols, 1)
+        
+    
+    
+    def LogisticRegression(self):
+        classifier = LogisticRegression(random_state = 0)
+        classifier.fit(self.X_train, self.y_train)
+        
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
+        
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
+        
+        print("Logistic Regression Train Accuracy:")
+        print(accuracy_train)
+        print("Logistic Regression Test Accuracy:")
+        print(accuracy_test)
+        
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "Logistic Regression", classifier)
+        
+            
+        
+    def KNN(self, pnumofneighbour, pmetric, pp):
+        classifier = KNeighborsClassifier(n_neighbors = pnumofneighbour, metric = pmetric, p = pp)
+        classifier.fit(self.X_train, self.y_train)
+        
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
+        
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
+        
+        print("KNN Train Accuracy:")
+        print(accuracy_train)
+        print("KNN Test Accuracy:")
+        print(accuracy_test)
+        
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "KNN", classifier)
+       
+        
+    def NaiveBayes(self):
+        classifier = GaussianNB()
+        classifier.fit(self.X_train, self.y_train)
+        
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
+        
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
+        
+        print("Naive Bayes Train Accuracy:")
+        print(accuracy_train)
+        print("Naive Bayes Test Accuracy:")
+        print(accuracy_test)
+        
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "Naive Bayes", classifier)
+        
+        
+    def KernelSVM(self, pkernel):
+        classifier = SVC(kernel = pkernel, random_state = 0)
+        classifier.fit(self.X_train, self.y_train)
+        
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
+        
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
+        
+        print("Kernel SVM Train Accuracy:")
+        print(accuracy_train)
+        print("Kernel SVM Test Accuracy:")
+        print(accuracy_test)
+        
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "Kernel SVM", classifier)
+            
+
+    def DecisionTree(self, pcriterion):
+        classifier = DecisionTreeClassifier(criterion = pcriterion, random_state = 0)
+        classifier.fit(self.X_train, self.y_train)
+        
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
+        
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
+        
+        print("Decision Tree Train Accuracy:")
+        print(accuracy_train)
+        print("Decision Tree Test Accuracy:")
+        print(accuracy_test)
+        
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "Decision Tree", classifier)
 
 
-class CheckTrainStatus(Resource):
-    def post(self):
-        data = request.get_json()
+    def RandomForest(self, pestimators, pcriterion):
+        classifier = RandomForestClassifier(n_estimators = pestimators, criterion = pcriterion, random_state = 0)
+        classifier.fit(self.X_train, self.y_train)
+        
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
+        
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
+        
+        print("Random Forest Train Accuracy:")
+        print(accuracy_train)
+        print("Random Forest Test Accuracy:")
+        print(accuracy_test)
+        
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "Random Forest", classifier)
+            
+        
+    
+    def XGBoost(self):
+        asd =5
+        return True
+        
+        
+    def ArtificialNeuralNetwork(self):
+        
+        numOfCols = len(self.X[0])
+        
+        # Initialising the ANN
+        classifier = Sequential()
+        
+        # Adding the input layer and the first hidden layer
+        classifier.add(Dense(units = int(numOfCols/2), kernel_initializer = 'uniform', activation = 'relu', input_dim = numOfCols))
+        
+        # Adding the second hidden layer
+        classifier.add(Dense(units = int(numOfCols/2), kernel_initializer = 'uniform', activation = 'relu'))
+        
+        # Adding the output layer
+        classifier.add(Dense(units = 1, kernel_initializer = 'uniform', activation = 'sigmoid'))
+        
+        # Compiling the ANN
+        classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+        
+        # Fitting the ANN to the Training set
+        classifier.fit(self.X_train, self.y_train, batch_size = 32, epochs = 50)
+        
+        # Predicting the Test set results
+        y_train_predict = classifier.predict(self.X_train)
+        y_train_predict = (y_train_predict > 0.5)
+        
+        y_test_predict = classifier.predict(self.X_test)
+        y_test_predict = (y_test_predict > 0.5)
+        
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
+        
+        print("Neural Network Train Accuracy:")
+        print(accuracy_train)
+        print("Neural Network Test Accuracy:")
+        print(accuracy_test)
+        
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "Neural Network", classifier)
 
-        username = data["username"]
-        password = data["password"]
+
+    '''Generates given model type with different parameters and assigns highest acc. model'''
+    def GenerateModels(self):
+        
+        modelType = self.data.get('modelType')
+        
+        if modelType:
+            if(modelType == "LogisticRegression"):
+                self.LogisticRegression()
+            elif(modelType == "KNN"):
+                numofneighbour = self.data["numofneighbour"]
+                p = self.data["p"]
+                metric = self.data["metric"]
+                self.KNN(numofneighbour, metric, p)        
+            elif(modelType == "NaiveBayes"):
+                self.NaiveBayes()
+            elif(modelType == "KernelSVM"):
+                kernel = self.data["kernel"]
+                self.KernelSVM(kernel)
+            elif(modelType == "DecisionTree"):
+                criterion = self.data["criterion"]
+                self.DecisionTree(criterion)
+            elif(modelType == "RandomForest"):
+                estimators = self.data["estimators"]
+                criterion = self.data["criterion"]
+                self.RandomForest(estimators, criterion)
+            elif(modelType == "XGBoost"):
+                self.XGBoost()
+            elif(modelType == "ArtificialNeuralNetwork"):
+                self.ArtificialNeuralNetwork()
+            
+        else:
+            
+            #Logistic Regression Models
+            self.LogisticRegression()
+            
+            #KNN Models
+            for numofneighbour in range(3,7):
+                for p in range(1,5):
+                    for metric in ["minkowski"]:
+                        self.KNN(numofneighbour, metric, p)
+                        
+            #Naive Bayes Models
+            self.NaiveBayes()
+            
+            #Kernel SVM Models
+            for kernel in ["linear", "poly", "rbf", "sigmoid"]:
+                self.KernelSVM(kernel)
+                
+            #Decision Tree Models
+            for criterion in ["gini", "entropy"]:
+                self.DecisionTree(criterion)
+                
+            #Random Forest Models
+            for estimators in range(8,14):
+                for criterion in ["gini", "entropy"]:
+                    self.RandomForest(estimators, criterion)
+            
+            #XGBoost Models
+            self.XGBoost()
+            
+            #Neural Network Models
+            self.ArtificialNeuralNetwork()
+    
+    
+    def Run(self):
         
         try:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-            
-            if(MakeValidations(username, password, 'checkTrainStatus')):
-                statuslistCursor = db.trainstatus.find({"username": username}, {'_id': 0})
-                if statuslistCursor is None:
-                    return {'info': 0}
-                else:
-                    statuslist = []
-                    for status in statuslistCursor:
-                        statuslist.append(status)
-                    return {'info': 1, 'statuslist': statuslist }
-            else:
-                return {'info': 0}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
-            
-
-
-class RemoveModel(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        username = data["username"]
-        password = data["password"]
-        modelname = data["modelname"]
-        
-        try:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-            
-            if(MakeValidations(username, password, 'removeModel')):
-                client = pymongo.MongoClient(dburi, ssl=True)
-                db = client.churndb
-        
-                #Remove from modeldetails
-                oldPost = db.modeldetails.find_one({"username": username })
-        
-                '''User has at least one model before '''
-                prevModels = oldPost["models"]
-                newModels = []
-                inModelDetails = False
-                for model in prevModels:
-                    if model["modelname"] == modelname:
-                        inModelDetails = True
-                    else:
-                        newModels.append(dict(model))
-                if inModelDetails:
-                    oldPost["models"] = newModels
-                    db.modeldetails.update_one({"username": username}, {"$set": dict(oldPost)}, upsert=True)
-                    return {'info': 1, 'details': 'Removed from Trained Models'}
-                else:
-                    #Remove from trainstatus
-                    db.trainstatus.delete_one({"username": username, "modelname": modelname })
-                    return {'info': 1, 'details': 'Removed from StatusList'}
+            ''' Save status '''
+            self.SaveTrainStatus(0, 'Preprocess Starting...')
                 
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
+            #Preprocess dataset
+            self.Preprocess()
                 
-     
+            ''' Save status '''
+            self.SaveTrainStatus(0, 'Preprocess Finished.GMS Starting...')
+    
+            #Create models, find best model
+            self.GenerateModels()
+                
+            ''' Save status '''
+            self.SaveTrainStatus(0, 'GMS Finished.Best model is being saved.')
+            
+            #Save the best model
+            self.SaveModel()
+                
+            ''' Save status '''
+            self.SaveTrainStatus(1, 'Best model is saved.')
+                
+            print("GMS Finished Successfuly !")
+        except Exception as e:
+            
+            ''' Save status '''
+            self.SaveTrainStatus(-1, 'GMS Finished with errors: ' + str(e))
+            
+            print("GMS Finished with errors: " + str(e))
+            
         
-api.add_resource(MainPage, '/')
-api.add_resource(Test, '/test')
-
-api.add_resource(Register, '/register')
-api.add_resource(Login, '/login')
-
-api.add_resource(GetUserPlan, '/getUserPlan')
-api.add_resource(UpdateUserPlan, '/updateUserPlan')
-
-api.add_resource(ColumnsInfos, '/columnsInfos')
-api.add_resource(Train, '/train')
-api.add_resource(Predict, '/predict')
-
-api.add_resource(ModelList, '/modelList')
-api.add_resource(CheckTrainStatus, '/checkStatus')
-api.add_resource(RemoveModel, '/removeModel')
-
+            
+            
