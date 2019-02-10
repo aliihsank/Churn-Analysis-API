@@ -28,9 +28,15 @@ class GMS:
     
     maxScore = 0
     bestModel = ""
-    userName = ""
-    modelName = ""
     algorithm = ""
+    
+    maxScoreWithHighVariance = 0
+    bestModelWithHighVariance = ""
+    algorithmWithHighVariance = ""
+    
+    modelName = ""
+    userName = ""
+    
     dburi = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
     
     
@@ -110,7 +116,19 @@ class GMS:
         s3.meta.client.put_object(Body=modelInBytes, Bucket=bucket_name, Key=modelPath)
         s3.meta.client.put_object(Body=scalerInBytes, Bucket=bucket_name, Key=scalerPath)
         
-
+    
+    def CheckHighScore(self, acc_variance, acc_avg, algorithm, classifier):
+        if(acc_variance <= 6):
+            if(acc_avg > self.maxScore):
+                self.bestModel = classifier
+                self.maxScore = acc_avg
+                self.algorithm = algorithm
+        else:
+            if(acc_avg > self.maxScoreWithHighVariance):
+                self.bestModelWithHighVariance = classifier
+                self.maxScoreWithHighVariance = acc_avg
+                self.algorithmWithHighVariance = algorithm
+    
 
     def Preprocess(self):        
         ''' Make dataset a dataframe '''
@@ -205,11 +223,11 @@ class GMS:
         print("Logistic Regression Test Accuracy:")
         print(accuracy_test)
         
-        if(abs(accuracy_test - accuracy_train) <= 6):
-            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
-                self.bestModel = classifier
-                self.maxScore = (accuracy_train + accuracy_test) / 2
-                self.algorithm = "Logistic Regression"
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "Logistic Regression", classifier)
+        
             
         
     def KNN(self, pnumofneighbour, pmetric, pp):
@@ -227,11 +245,10 @@ class GMS:
         print("KNN Test Accuracy:")
         print(accuracy_test)
         
-        if(abs(accuracy_test - accuracy_train) <= 6):
-            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
-                self.bestModel = classifier
-                self.maxScore = (accuracy_train + accuracy_test) / 2
-                self.algorithm = "KNN"
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "KNN", classifier)
        
         
     def NaiveBayes(self):
@@ -249,11 +266,10 @@ class GMS:
         print("Naive Bayes Test Accuracy:")
         print(accuracy_test)
         
-        if(abs(accuracy_test - accuracy_train) <= 6):
-            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
-                self.bestModel = classifier
-                self.maxScore = (accuracy_train + accuracy_test) / 2
-                self.algorithm = "Naive Bayes"
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "Naive Bayes", classifier)
         
         
     def KernelSVM(self, pkernel):
@@ -271,11 +287,10 @@ class GMS:
         print("Kernel SVM Test Accuracy:")
         print(accuracy_test)
         
-        if(abs(accuracy_test - accuracy_train) <= 6):
-            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
-                self.bestModel = classifier
-                self.maxScore = (accuracy_train + accuracy_test) / 2
-                self.algorithm = "Kernel SVM"
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "Kernel SVM", classifier)
             
 
     def DecisionTree(self, pcriterion):
@@ -293,11 +308,10 @@ class GMS:
         print("Decision Tree Test Accuracy:")
         print(accuracy_test)
         
-        if(abs(accuracy_test - accuracy_train) <= 6):
-            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
-                self.bestModel = classifier
-                self.maxScore = (accuracy_train + accuracy_test) / 2
-                self.algorithm = "Decision Tree"
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "Decision Tree", classifier)
 
 
     def RandomForest(self, pestimators, pcriterion):
@@ -315,11 +329,10 @@ class GMS:
         print("Random Forest Test Accuracy:")
         print(accuracy_test)
         
-        if(abs(accuracy_test - accuracy_train) <= 6):
-            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
-                self.bestModel = classifier
-                self.maxScore = (accuracy_train + accuracy_test) / 2
-                self.algorithm = "Random Forest"
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "Random Forest", classifier)
             
             
     def ArtificialNeuralNetwork(self):
@@ -359,12 +372,10 @@ class GMS:
         print("Neural Network Test Accuracy:")
         print(accuracy_test)
         
-        if(abs(accuracy_test - accuracy_train) <= 6):
-            if(((accuracy_train + accuracy_test) / 2) > self.maxScore):
-                self.bestModel = classifier
-                self.maxScore = (accuracy_train + accuracy_test) / 2
-                self.algorithm = "Neural Network"
-
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "Neural Network", classifier)
 
 
     '''Generates given model type with different parameters and assigns highest acc. model'''
