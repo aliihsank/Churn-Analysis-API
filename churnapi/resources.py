@@ -331,8 +331,8 @@ class Predict(Resource):
                 
                 #Make prediction
                 ''' Formatted to return true results for NN '''
-                result = model.predict(predictset).tolist()
-                #result = [int(i > 0.5) for i in model.predict(predictset).tolist()]
+                #result = model.predict(predictset).tolist()
+                result = [int(i > 0.5) for i in model.predict(predictset).tolist()]
                 #Return result
                 return {'info': 1, 'prediction': result}
             else:
