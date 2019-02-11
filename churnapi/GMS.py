@@ -2,7 +2,7 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler, I
 
 from sklearn.model_selection import train_test_split
 
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import cross_val_score
 
 from sklearn.neighbors import KNeighborsClassifier
@@ -129,7 +129,13 @@ class GMS:
         accuracy_train = accuracy_score(self.y_train, y_train_predict)
         accuracy_test = accuracy_score(self.y_test, y_test_predict)
         
-        accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10)
+        cm = confusion_matrix(self.y_test, y_test_predict)
+        print(cm)
+        
+        if algorithm == "Neural Network":
+            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10, fit_params = {"batch_size": 32, "epochs": 50})
+        else:
+            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10)
         print(accuracies.mean())
         
         print(algorithm + " Train Accuracy:")
