@@ -328,11 +328,13 @@ class Predict(Resource):
                 #Feature Scaling (predictset comes onehotencoded)
                 ss = LoadScalerFrom(username + modelname + "scaler.txt")
                 predictset = ss.transform(predictset)
-                
+                                
                 #Make prediction
                 ''' Formatted to return true results for NN '''
                 #result = model.predict(predictset).tolist()
-                result = [int(i > 0.5) for i in model.predict(predictset).tolist()]
+                result = model.predict(predictset).tolist()
+                print(result)
+                result = [int(i > 0.5) for i in result]
                 print(result)
                 #Return result
                 return {'info': 1, 'prediction': result}
