@@ -10,6 +10,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+import xgboost as xgb
 
 from sklearn.decomposition import KernelPCA
 
@@ -337,8 +338,40 @@ class GMS:
         
     
     def XGBoost(self):
-        asd =5
-        return True
+        # Create DMatrixes
+        dtrain = xgb.DMatrix(self.X_train, label = self.y_train)
+        dtest = xgb.DMatrix(self.X_test, label = self.y_test)
+        
+        # XGBoost Params
+        params = {
+            'max_depth': 2,
+            'eta': 0.4,
+            'silent': 1,
+            'object': 'multi:softprob',
+            'num_class': 2
+        }
+        num_iters = 10
+        
+        watchlist = [(dtest,'eval'),(dtrain,'train')]
+        
+        # Train
+        classifier = xgb.train(params, dtrain, num_iters, watchlist)
+                
+        y_train_predict = classifier.predict(dtrain)
+        y_test_predict = classifier.predict(dtest)
+        
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
+        
+        print("XGBoost Train Accuracy:")
+        print(accuracy_train)
+        print("XGBoost Test Accuracy:")
+        print(accuracy_test)
+        
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        self.CheckHighScore(acc_variance, acc_avg, "XGBoost", classifier)
         
         
     def ArtificialNeuralNetwork(self):
