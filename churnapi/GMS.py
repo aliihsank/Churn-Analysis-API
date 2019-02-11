@@ -129,7 +129,8 @@ class GMS:
         accuracy_train = accuracy_score(self.y_train, y_train_predict)
         accuracy_test = accuracy_score(self.y_test, y_test_predict)
         
-        #cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict)
+        accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10)
+        print(accuracies.mean())
         
         print(algorithm + " Train Accuracy:")
         print(accuracy_train)
@@ -293,35 +294,35 @@ class GMS:
     
     ''' Sends various parameters to GenerateModel method to create multiple models '''
     def ModelMultiplexer(self):
-        #Logistic Regression Models
+        #Logistic Regression Models - 1
         self.GenerateModel({"modelType": "Logistic Regression"})
             
-        #KNN Models
+        #KNN Models - 16
         for numofneighbour in range(3,7):
             for p in range(1,5):
                 for metric in ["minkowski"]:
                     self.GenerateModel({"modelType": "KNN", "numofneighbour": numofneighbour, "metric": metric, "p": p})
                         
-        #Naive Bayes Models
+        #Naive Bayes Models - 1
         self.GenerateModel({"modelType": "Naive Bayes"})
             
-        #Kernel SVM Models
+        #Kernel SVM Models - 4
         for kernel in ["linear", "poly", "rbf", "sigmoid"]:
             self.GenerateModel({"modelType": "Kernel SVM", "kernel": kernel})
                 
-        #Decision Tree Models
+        #Decision Tree Models - 2
         for criterion in ["gini", "entropy"]:
             self.GenerateModel({"modelType": "Decision Tree", "criterion": criterion})
             
-        #Random Forest Models
+        #Random Forest Models - 14
         for estimators in range(8,14):
             for criterion in ["gini", "entropy"]:
                 self.GenerateModel({"modelType": "Random Forest", "criterion": criterion, "estimators": estimators})
             
-        #XGBoost Models
+        #XGBoost Models - 1
         self.GenerateModel({"modelType": "XGBoost"})
             
-        #Neural Network Models
+        #Neural Network Models - 1
         self.GenerateModel({"modelType": "Neural Network"})
     
     
