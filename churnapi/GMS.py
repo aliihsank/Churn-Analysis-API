@@ -133,7 +133,7 @@ class GMS:
         print(cm)
         
         if algorithm == "Neural Network":
-            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10, fit_params = {"batch_size": 32, "epochs": 50})
+            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10, scoring="accuracy", fit_params = {"batch_size": 32, "epochs": 50})
         else:
             accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10)
         print(accuracies.mean())
