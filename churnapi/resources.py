@@ -10,6 +10,7 @@ from threading import Thread
 
 import pandas as pd
 import numpy as np
+import json
 
 import pickle
 import pymongo
@@ -193,6 +194,7 @@ class GetUserPlan(Resource):
             db = client.churndb
             
             userdetails = db.userdetails.find_one({"username": username, "password": password}, {'_id': 0})
+            json.dumps(userdetails, indent=4, sort_keys=True, default=str)
             
             return {'info': 1, 'user': userdetails}
             
@@ -331,11 +333,8 @@ class Predict(Resource):
                                 
                 #Make prediction
                 ''' Formatted to return true results for NN '''
-                #result = model.predict(predictset).tolist()
-                result = model.predict(predictset)
-                print(result)
-                result = [int(i > 0.5) for i in result]
-                print(result)
+                result = [int(i > 0.5) for i in model.predict(predictset)]
+                
                 #Return result
                 return {'info': 1, 'prediction': result}
             else:
