@@ -332,7 +332,7 @@ class Predict(Resource):
                 #Make prediction
                 ''' Formatted to return true results for NN '''
                 #result = model.predict(predictset).tolist()
-                result = model.predict(predictset).tolist()
+                result = model.predict(predictset)
                 print(result)
                 result = [int(i > 0.5) for i in result]
                 print(result)
