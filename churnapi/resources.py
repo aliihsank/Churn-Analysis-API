@@ -194,7 +194,7 @@ class GetUserPlan(Resource):
             db = client.churndb
             
             userdetails = db.userdetails.find_one({"username": username, "password": password}, {'_id': 0})
-            userdetails = json.dumps(userdetails, indent=4, sort_keys=True, default=str)
+            userdetails["endDate"] = json.dumps(userdetails["endDate"], indent=4, sort_keys=True, default=str)
             
             return {'info': 1, 'user': userdetails}
             
