@@ -118,7 +118,27 @@ class GMS:
         s3.meta.client.put_object(Body=scalerInBytes, Bucket=bucket_name, Key=scalerPath)
         
     
-    def CheckHighScore(self, acc_variance, acc_avg, algorithm, classifier):
+    def CheckHighScore(self, classifier):
+        algorithm = type(classifier).__name__
+        
+        y_train_predict = classifier.predict(self.X_train)
+        y_train_predict = (y_train_predict > 0.5)
+        
+        y_test_predict = classifier.predict(self.X_test)
+        y_test_predict = (y_test_predict > 0.5)
+        
+        accuracy_train = accuracy_score(self.y_train, y_train_predict)
+        accuracy_test = accuracy_score(self.y_test, y_test_predict)
+        
+        print(algorithm + " Train Accuracy:")
+        print(accuracy_train)
+        print(algorithm + " Test Accuracy:")
+        print(accuracy_test)
+        
+        acc_variance = abs(accuracy_test - accuracy_train)
+        acc_avg = (accuracy_train + accuracy_test) / 2
+        
+        
         if(acc_variance <= 6):
             if(acc_avg > self.maxScore):
                 self.bestModel = classifier
@@ -207,159 +227,8 @@ class GMS:
             '''Remove dummy variable'''
             self.X = np.delete(self.X, numOfUniqueValsForCatCols, 1)
         
-    
-    
-    def LogisticRegression(self):
-        classifier = LogisticRegression(random_state = 0)
-        classifier.fit(self.X_train, self.y_train)
-        
-        y_train_predict = classifier.predict(self.X_train)
-        y_test_predict = classifier.predict(self.X_test)
-        
-        accuracy_train = accuracy_score(self.y_train, y_train_predict)
-        accuracy_test = accuracy_score(self.y_test, y_test_predict)
-        
-        print("Logistic Regression Train Accuracy:")
-        print(accuracy_train)
-        print("Logistic Regression Test Accuracy:")
-        print(accuracy_test)
-        
-        acc_variance = abs(accuracy_test - accuracy_train)
-        acc_avg = (accuracy_train + accuracy_test) / 2
-        
-        self.CheckHighScore(acc_variance, acc_avg, "Logistic Regression", classifier)
-        
-            
-        
-    def KNN(self, pnumofneighbour, pmetric, pp):
-        classifier = KNeighborsClassifier(n_neighbors = pnumofneighbour, metric = pmetric, p = pp)
-        classifier.fit(self.X_train, self.y_train)
-        
-        y_train_predict = classifier.predict(self.X_train)
-        y_test_predict = classifier.predict(self.X_test)
-        
-        accuracy_train = accuracy_score(self.y_train, y_train_predict)
-        accuracy_test = accuracy_score(self.y_test, y_test_predict)
-        
-        print("KNN Train Accuracy:")
-        print(accuracy_train)
-        print("KNN Test Accuracy:")
-        print(accuracy_test)
-        
-        acc_variance = abs(accuracy_test - accuracy_train)
-        acc_avg = (accuracy_train + accuracy_test) / 2
-        
-        self.CheckHighScore(acc_variance, acc_avg, "KNN", classifier)
-       
-        
-    def NaiveBayes(self):
-        classifier = GaussianNB()
-        classifier.fit(self.X_train, self.y_train)
-        
-        y_train_predict = classifier.predict(self.X_train)
-        y_test_predict = classifier.predict(self.X_test)
-        
-        accuracy_train = accuracy_score(self.y_train, y_train_predict)
-        accuracy_test = accuracy_score(self.y_test, y_test_predict)
-        
-        print("Naive Bayes Train Accuracy:")
-        print(accuracy_train)
-        print("Naive Bayes Test Accuracy:")
-        print(accuracy_test)
-        
-        acc_variance = abs(accuracy_test - accuracy_train)
-        acc_avg = (accuracy_train + accuracy_test) / 2
-        
-        self.CheckHighScore(acc_variance, acc_avg, "Naive Bayes", classifier)
-        
-        
-    def KernelSVM(self, pkernel):
-        classifier = SVC(kernel = pkernel, random_state = 0)
-        classifier.fit(self.X_train, self.y_train)
-        
-        y_train_predict = classifier.predict(self.X_train)
-        y_test_predict = classifier.predict(self.X_test)
-        
-        accuracy_train = accuracy_score(self.y_train, y_train_predict)
-        accuracy_test = accuracy_score(self.y_test, y_test_predict)
-        
-        print("Kernel SVM Train Accuracy:")
-        print(accuracy_train)
-        print("Kernel SVM Test Accuracy:")
-        print(accuracy_test)
-        
-        acc_variance = abs(accuracy_test - accuracy_train)
-        acc_avg = (accuracy_train + accuracy_test) / 2
-        
-        self.CheckHighScore(acc_variance, acc_avg, "Kernel SVM", classifier)
-            
-
-    def DecisionTree(self, pcriterion):
-        classifier = DecisionTreeClassifier(criterion = pcriterion, random_state = 0)
-        classifier.fit(self.X_train, self.y_train)
-        
-        y_train_predict = classifier.predict(self.X_train)
-        y_test_predict = classifier.predict(self.X_test)
-        
-        accuracy_train = accuracy_score(self.y_train, y_train_predict)
-        accuracy_test = accuracy_score(self.y_test, y_test_predict)
-        
-        print("Decision Tree Train Accuracy:")
-        print(accuracy_train)
-        print("Decision Tree Test Accuracy:")
-        print(accuracy_test)
-        
-        acc_variance = abs(accuracy_test - accuracy_train)
-        acc_avg = (accuracy_train + accuracy_test) / 2
-        
-        self.CheckHighScore(acc_variance, acc_avg, "Decision Tree", classifier)
-
-
-    def RandomForest(self, pestimators, pcriterion):
-        classifier = RandomForestClassifier(n_estimators = pestimators, criterion = pcriterion, random_state = 0)
-        classifier.fit(self.X_train, self.y_train)
-        
-        y_train_predict = classifier.predict(self.X_train)
-        y_test_predict = classifier.predict(self.X_test)
-        
-        accuracy_train = accuracy_score(self.y_train, y_train_predict)
-        accuracy_test = accuracy_score(self.y_test, y_test_predict)
-        
-        print("Random Forest Train Accuracy:")
-        print(accuracy_train)
-        print("Random Forest Test Accuracy:")
-        print(accuracy_test)
-        
-        acc_variance = abs(accuracy_test - accuracy_train)
-        acc_avg = (accuracy_train + accuracy_test) / 2
-        
-        self.CheckHighScore(acc_variance, acc_avg, "Random Forest", classifier)
-            
-        
-    
-    def XGBoost(self):
-        classifier = XGBClassifier()
-        classifier.fit(self.X_train, self.y_train)
-                
-        y_train_predict = classifier.predict(self.X_train)
-        y_test_predict = classifier.predict(self.X_test)
-        
-        accuracy_train = accuracy_score(self.y_train, y_train_predict)
-        accuracy_test = accuracy_score(self.y_test, y_test_predict)
-        
-        print("XGBoost Train Accuracy:")
-        print(accuracy_train)
-        print("XGBoost Test Accuracy:")
-        print(accuracy_test)
-        
-        acc_variance = abs(accuracy_test - accuracy_train)
-        acc_avg = (accuracy_train + accuracy_test) / 2
-        
-        self.CheckHighScore(acc_variance, acc_avg, "XGBoost", classifier)
-        
-        
+     
     def ArtificialNeuralNetwork(self):
-        
         numOfCols = len(self.X[0])
         
         # Initialising the ANN
@@ -377,92 +246,84 @@ class GMS:
         # Compiling the ANN
         classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
         
-        # Fitting the ANN to the Training set
-        classifier.fit(self.X_train, self.y_train, batch_size = 32, epochs = 50)
-        
-        # Predicting the Test set results
-        y_train_predict = classifier.predict(self.X_train)
-        y_train_predict = (y_train_predict > 0.5)
-        
-        y_test_predict = classifier.predict(self.X_test)
-        y_test_predict = (y_test_predict > 0.5)
-        
-        accuracy_train = accuracy_score(self.y_train, y_train_predict)
-        accuracy_test = accuracy_score(self.y_test, y_test_predict)
-        
-        print("Neural Network Train Accuracy:")
-        print(accuracy_train)
-        print("Neural Network Test Accuracy:")
-        print(accuracy_test)
-        
-        acc_variance = abs(accuracy_test - accuracy_train)
-        acc_avg = (accuracy_train + accuracy_test) / 2
-        
-        self.CheckHighScore(acc_variance, acc_avg, "Neural Network", classifier)
+        return classifier
 
 
-    '''Generates given model type with different parameters and assigns highest acc. model'''
-    def GenerateModels(self):
-        
-        modelType = self.data.get('modelType')
-        
-        if modelType:
-            if(modelType == "LogisticRegression"):
-                self.LogisticRegression()
-            elif(modelType == "KNN"):
-                numofneighbour = self.data["numofneighbour"]
-                p = self.data["p"]
-                metric = self.data["metric"]
-                self.KNN(numofneighbour, metric, p)        
-            elif(modelType == "NaiveBayes"):
-                self.NaiveBayes()
-            elif(modelType == "KernelSVM"):
-                kernel = self.data["kernel"]
-                self.KernelSVM(kernel)
-            elif(modelType == "DecisionTree"):
-                criterion = self.data["criterion"]
-                self.DecisionTree(criterion)
-            elif(modelType == "RandomForest"):
-                estimators = self.data["estimators"]
-                criterion = self.data["criterion"]
-                self.RandomForest(estimators, criterion)
-            elif(modelType == "XGBoost"):
-                self.XGBoost()
-            elif(modelType == "ArtificialNeuralNetwork"):
-                self.ArtificialNeuralNetwork()
-            
+    def RunEncapsulatedModel(self, classifier):
+        if type(classifier).__name__ == "Sequential":
+            classifier.fit(self.X_train, self.y_train, batch_size = 32, epochs = 50)
         else:
+            classifier.fit(self.X_train, self.y_train)
+    
+        self.CheckHighScore(classifier)
+
+
+    ''' Generates the model within the given parameters and run it '''
+    def GenerateModel(self, params):
+        modelType = params.get('modelType')
+        
+        if(modelType == "LogisticRegression"):
+            classifier = LogisticRegression(random_state = 0)
+                
+        elif(modelType == "KNN"):
+            classifier = KNeighborsClassifier(n_neighbors = params["numofneighbour"], metric = params["metric"], p = params["p"]) 
+                
+        elif(modelType == "NaiveBayes"):
+            classifier = GaussianNB()
+                
+        elif(modelType == "KernelSVM"):
+            classifier = SVC(kernel = params["kernel"], random_state = 0)
             
-            #Logistic Regression Models
-            self.LogisticRegression()
+        elif(modelType == "DecisionTree"):
+            classifier = DecisionTreeClassifier(criterion = params["criterion"], random_state = 0)
             
-            #KNN Models
-            for numofneighbour in range(3,7):
-                for p in range(1,5):
-                    for metric in ["minkowski"]:
-                        self.KNN(numofneighbour, metric, p)
+        elif(modelType == "RandomForest"):
+            classifier = RandomForestClassifier(n_estimators = params["estimators"], criterion = params["criterion"], random_state = 0)
+            
+        elif(modelType == "XGBoost"):
+            classifier = XGBClassifier()
+            
+        elif(modelType == "ArtificialNeuralNetwork"):
+            classifier = self.ArtificialNeuralNetwork()
+            
+        #Run the classifier
+        self.RunEncapsulatedModel(classifier)
+        
+    
+    ''' Sends various parameters to GenerateModel method to create multiple models '''
+    def ModelMultiplexer(self):
+        #Logistic Regression Models
+        self.GenerateModel({"modelType": "LogisticRegression"})
+            
+        #KNN Models
+        for numofneighbour in range(3,7):
+            for p in range(1,5):
+                for metric in ["minkowski"]:
+                    self.GenerateModel({"modelType": "KNN", "numofneighbour": numofneighbour, "metric": metric, "p": p})
                         
-            #Naive Bayes Models
-            self.NaiveBayes()
+        #Naive Bayes Models
+        self.GenerateModel({"modelType": "NaiveBayes"})
             
-            #Kernel SVM Models
-            for kernel in ["linear", "poly", "rbf", "sigmoid"]:
-                self.KernelSVM(kernel)
+        #Kernel SVM Models
+        for kernel in ["linear", "poly", "rbf", "sigmoid"]:
+            self.GenerateModel({"modelType": "KernelSVM", "kernel": kernel})
                 
-            #Decision Tree Models
+        #Decision Tree Models
+        for criterion in ["gini", "entropy"]:
+            self.GenerateModel({"modelType": "DecisionTree", "criterion": criterion})
+            
+        #Random Forest Models
+        for estimators in range(8,14):
             for criterion in ["gini", "entropy"]:
-                self.DecisionTree(criterion)
-                
-            #Random Forest Models
-            for estimators in range(8,14):
-                for criterion in ["gini", "entropy"]:
-                    self.RandomForest(estimators, criterion)
+                self.GenerateModel({"modelType": "RandomForest", "criterion": criterion, "estimators": estimators})
             
-            #XGBoost Models
-            self.XGBoost()
+        #XGBoost Models
+        self.GenerateModel({"modelType": "XGBoost"})
             
-            #Neural Network Models
-            self.ArtificialNeuralNetwork()
+        #Neural Network Models
+        self.GenerateModel({"modelType": "ArtificialNeuralNetwork"})
+    
+    
     
     
     def Run(self):
@@ -478,7 +339,10 @@ class GMS:
             self.SaveTrainStatus(0, 'Preprocess Finished.GMS Starting...')
     
             #Create models, find best model
-            self.GenerateModels()
+            if self.data.get('modelType'):
+                self.GenerateModel(self.data)
+            else:
+                self.ModelMultiplexer()
                 
             ''' Save status '''
             self.SaveTrainStatus(0, 'GMS Finished.Best model is being saved.')
