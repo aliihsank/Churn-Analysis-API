@@ -4,6 +4,8 @@ from flask_restful import Resource
 
 from sklearn.preprocessing import StandardScaler
 
+import xgboost as xgb
+
 from datetime import datetime, timedelta
 
 from threading import Thread
@@ -319,6 +321,7 @@ class Predict(Resource):
         username = data["username"]
         password = data["password"]
         modelname = data["modelname"]
+        modeltype = data["modeltype"]
         predictset = data["predictset"]
         
         try:
@@ -330,9 +333,13 @@ class Predict(Resource):
                 #Feature Scaling (predictset comes onehotencoded)
                 ss = LoadScalerFrom(username + modelname + "scaler.txt")
                 predictset = ss.transform(predictset)
+                
+                #Format predictset for XGBoost Model
+                if modeltype == "XGBoost":
+                    predictset = xgb.DMatrix(predictset)
                                 
                 #Make prediction
-                ''' Formatted to return true results for NN '''
+                ''' Formatted to return true results for NN too '''
                 result = [int(i > 0.5) for i in model.predict(predictset)]
                 
                 #Return result
