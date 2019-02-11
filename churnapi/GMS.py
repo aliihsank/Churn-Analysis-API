@@ -3,6 +3,7 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler, I
 from sklearn.model_selection import train_test_split
 
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import cross_val_score
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
@@ -118,9 +119,7 @@ class GMS:
         s3.meta.client.put_object(Body=scalerInBytes, Bucket=bucket_name, Key=scalerPath)
         
     
-    def CheckHighScore(self, classifier):
-        algorithm = type(classifier).__name__
-        
+    def CheckHighScore(self, classifier, algorithm):
         y_train_predict = classifier.predict(self.X_train)
         y_train_predict = (y_train_predict > 0.5)
         
@@ -129,6 +128,8 @@ class GMS:
         
         accuracy_train = accuracy_score(self.y_train, y_train_predict)
         accuracy_test = accuracy_score(self.y_test, y_test_predict)
+        
+        #cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict)
         
         print(algorithm + " Train Accuracy:")
         print(accuracy_train)
@@ -228,7 +229,7 @@ class GMS:
             self.X = np.delete(self.X, numOfUniqueValsForCatCols, 1)
         
      
-    def ArtificialNeuralNetwork(self):
+    def NeuralNetwork(self):
         numOfCols = len(self.X[0])
         
         # Initialising the ANN
@@ -249,51 +250,51 @@ class GMS:
         return classifier
 
 
-    def RunEncapsulatedModel(self, classifier):
-        if type(classifier).__name__ == "Sequential":
+    def RunEncapsulatedModel(self, classifier, modelType):
+        if modelType == "Neural Network":
             classifier.fit(self.X_train, self.y_train, batch_size = 32, epochs = 50)
         else:
             classifier.fit(self.X_train, self.y_train)
     
-        self.CheckHighScore(classifier)
+        self.CheckHighScore(classifier, modelType)
 
 
     ''' Generates the model within the given parameters and run it '''
     def GenerateModel(self, params):
         modelType = params.get('modelType')
         
-        if(modelType == "LogisticRegression"):
+        if(modelType == "Logistic Regression"):
             classifier = LogisticRegression(random_state = 0)
                 
         elif(modelType == "KNN"):
             classifier = KNeighborsClassifier(n_neighbors = params["numofneighbour"], metric = params["metric"], p = params["p"]) 
                 
-        elif(modelType == "NaiveBayes"):
+        elif(modelType == "Naive Bayes"):
             classifier = GaussianNB()
                 
-        elif(modelType == "KernelSVM"):
+        elif(modelType == "Kernel SVM"):
             classifier = SVC(kernel = params["kernel"], random_state = 0)
             
-        elif(modelType == "DecisionTree"):
+        elif(modelType == "Decision Tree"):
             classifier = DecisionTreeClassifier(criterion = params["criterion"], random_state = 0)
             
-        elif(modelType == "RandomForest"):
+        elif(modelType == "Random Forest"):
             classifier = RandomForestClassifier(n_estimators = params["estimators"], criterion = params["criterion"], random_state = 0)
             
         elif(modelType == "XGBoost"):
             classifier = XGBClassifier()
             
-        elif(modelType == "ArtificialNeuralNetwork"):
-            classifier = self.ArtificialNeuralNetwork()
+        elif(modelType == "Neural Network"):
+            classifier = self.NeuralNetwork()
             
         #Run the classifier
-        self.RunEncapsulatedModel(classifier)
+        self.RunEncapsulatedModel(classifier, modelType)
         
     
     ''' Sends various parameters to GenerateModel method to create multiple models '''
     def ModelMultiplexer(self):
         #Logistic Regression Models
-        self.GenerateModel({"modelType": "LogisticRegression"})
+        self.GenerateModel({"modelType": "Logistic Regression"})
             
         #KNN Models
         for numofneighbour in range(3,7):
@@ -302,26 +303,26 @@ class GMS:
                     self.GenerateModel({"modelType": "KNN", "numofneighbour": numofneighbour, "metric": metric, "p": p})
                         
         #Naive Bayes Models
-        self.GenerateModel({"modelType": "NaiveBayes"})
+        self.GenerateModel({"modelType": "Naive Bayes"})
             
         #Kernel SVM Models
         for kernel in ["linear", "poly", "rbf", "sigmoid"]:
-            self.GenerateModel({"modelType": "KernelSVM", "kernel": kernel})
+            self.GenerateModel({"modelType": "Kernel SVM", "kernel": kernel})
                 
         #Decision Tree Models
         for criterion in ["gini", "entropy"]:
-            self.GenerateModel({"modelType": "DecisionTree", "criterion": criterion})
+            self.GenerateModel({"modelType": "Decision Tree", "criterion": criterion})
             
         #Random Forest Models
         for estimators in range(8,14):
             for criterion in ["gini", "entropy"]:
-                self.GenerateModel({"modelType": "RandomForest", "criterion": criterion, "estimators": estimators})
+                self.GenerateModel({"modelType": "Random Forest", "criterion": criterion, "estimators": estimators})
             
         #XGBoost Models
         self.GenerateModel({"modelType": "XGBoost"})
             
         #Neural Network Models
-        self.GenerateModel({"modelType": "ArtificialNeuralNetwork"})
+        self.GenerateModel({"modelType": "Neural Network"})
     
     
     
