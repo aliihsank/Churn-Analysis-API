@@ -42,7 +42,7 @@ It has following methods that can be requested:
 
 Also there is GMS(Generative Model Selector) class working in background to find best algorithm and parameters for given dataset
 
-GMS has 6 different classification algorithm and neural network to try with different parameters:
+GMS has 8 different classification algorithm to try with different parameters:
 - Logistic Regression
 - KNN
 - Naive Bayes
@@ -90,6 +90,7 @@ POST https://churn-analysis-api.herokuapp.com/removeModel
 
 
 ### TODOs: ###
-- Model Spesific Serialization/Deserialization bugfix
+- Using Cross Validation metrics to find best model and eliminate overfitted models
+- Grid Search to find best parameters
 - Optimization
 - Encapsulation
