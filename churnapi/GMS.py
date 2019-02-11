@@ -10,7 +10,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-import xgboost as xgb
+from xgboost import XGBClassifier
 
 from sklearn.decomposition import KernelPCA
 
@@ -338,27 +338,11 @@ class GMS:
         
     
     def XGBoost(self):
-        # Create DMatrixes
-        dtrain = xgb.DMatrix(self.X_train, label = self.y_train)
-        dtest = xgb.DMatrix(self.X_test, label = self.y_test)
-        
-        # XGBoost Params
-        params = {
-            'max_depth': 2,
-            'eta': 0.4,
-            'silent': 1,
-            'object': 'multi:softprob',
-            'num_class': 2
-        }
-        num_iters = 10
-        
-        watchlist = [(dtest,'eval'),(dtrain,'train')]
-        
-        # Train
-        classifier = xgb.train(params, dtrain, num_iters, watchlist)
+        classifier = XGBClassifier()
+        classifier.fit(self.X_train, self.y_train)
                 
-        y_train_predict = classifier.predict(dtrain)
-        y_test_predict = classifier.predict(dtest)
+        y_train_predict = classifier.predict(self.X_train)
+        y_test_predict = classifier.predict(self.X_test)
         
         accuracy_train = accuracy_score(self.y_train, y_train_predict)
         accuracy_test = accuracy_score(self.y_test, y_test_predict)
