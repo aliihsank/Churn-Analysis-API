@@ -50,6 +50,7 @@ GMS has 6 different classification algorithm and neural network to try with diff
 - Decision Tree
 - Random Forest
 - Neural Network
+- XGBoost
 
 Live version of this code is in:
 
@@ -89,8 +90,6 @@ POST https://churn-analysis-api.herokuapp.com/removeModel
 
 
 ### TODOs: ###
-- XGBoost Option
-- Save no model if every model becomes unsuccessful
 - Model Spesific Serialization/Deserialization bugfix
 - Optimization
 - Encapsulation
