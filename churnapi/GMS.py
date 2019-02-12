@@ -15,8 +15,11 @@ from xgboost import XGBClassifier
 
 from sklearn.decomposition import KernelPCA
 
+import keras
 from keras.models import Sequential
 from keras.layers import Dense
+
+from keras.wrappers.scikit_learn import KerasClassifier
 
 import pandas as pd
 import numpy as np
@@ -133,7 +136,7 @@ class GMS:
         print(cm)
         
         if algorithm == "Neural Network":
-            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10, scoring="accuracy", fit_params = {"batch_size": 32, "epochs": 50})
+            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10, fit_params = {"batch_size": 32, "epochs": 50})
         else:
             accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10)
         print(accuracies.mean())
@@ -259,7 +262,8 @@ class GMS:
 
     def RunEncapsulatedModel(self, classifier, modelType):
         if modelType == "Neural Network":
-            classifier.fit(self.X_train, self.y_train, batch_size = 32, epochs = 50)
+            classifier = KerasClassifier(build_fn = classifier, epochs = 50, batch_size = 32, verbose = 0)
+            #classifier.fit(self.X_train, self.y_train, batch_size = 32, epochs = 50)
         else:
             classifier.fit(self.X_train, self.y_train)
     
@@ -292,7 +296,7 @@ class GMS:
             classifier = XGBClassifier()
             
         elif(modelType == "Neural Network"):
-            classifier = self.NeuralNetwork()
+            classifier = self.NeuralNetwork
             
         #Run the classifier
         self.RunEncapsulatedModel(classifier, modelType)
