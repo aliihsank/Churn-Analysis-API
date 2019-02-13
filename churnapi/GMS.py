@@ -28,7 +28,6 @@ import pickle
 import pymongo
 import boto3
 
-
 class GMS:
     
     maxScore = 0
