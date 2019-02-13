@@ -136,7 +136,7 @@ class GMS:
         print(cm)
         
         if algorithm == "Neural Network":
-            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10, fit_params = {"batch_size": 32, "epochs": 50}, n_jobs = 1)
+            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10, fit_params = {"batch_size": 32, "epochs": 50}, n_jobs = -1)
         else:
             accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10)
         print(accuracies.mean())
@@ -239,7 +239,7 @@ class GMS:
             self.X = np.delete(self.X, numOfUniqueValsForCatCols, 1)
         
      
-    def NeuralNetwork(self):
+    def NeuralNetwork(self, **kwargs):
         numOfCols = len(self.X[0])
         
         # Initialising the ANN
