@@ -12,3 +12,4 @@ boto3==1.9.86
 tensorflow==1.12.0
 keras==2.2.4
 xgboost==0.81
+joblib==0.13.1
