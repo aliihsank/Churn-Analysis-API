@@ -310,6 +310,7 @@ class Train(Resource):
             else:
                 return {'info': 0, 'details': 'Your have reached your limit.'}
         except Exception as e:
+            print(str(e))
             return {'info': -1, 'details': str(e)}
             
 
