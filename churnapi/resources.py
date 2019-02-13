@@ -303,9 +303,9 @@ class Train(Resource):
                     return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
                 else:
                     gms = GMS(data)
-                    
-                    run = Thread(target = gms.Run, args = ())
-                    run.start()
+                    gms.Run()
+                    #run = Thread(target = gms.Run, args = ())
+                    #run.start()
                     return {'info': 1}
             else:
                 return {'info': 0, 'details': 'Your have reached your limit.'}
