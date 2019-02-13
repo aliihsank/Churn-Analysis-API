@@ -123,6 +123,17 @@ class GMS:
         
     
     def CheckHighScore(self, classifier, algorithm):
+        
+        kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=0)
+        
+        if algorithm == "Neural Network":
+            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = self.y_train, cv = kfold)
+        else:
+            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = self.y_train, cv = 10)
+        print(accuracies.mean())
+        
+        classifier.fit(self.X_train, self.y_train)
+        
         y_train_predict = classifier.predict(self.X_train)
         y_train_predict = (y_train_predict > 0.5)
         
@@ -135,13 +146,6 @@ class GMS:
         cm = confusion_matrix(self.y_test, y_test_predict)
         print(cm)
         
-        kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=0)
-        
-        if algorithm == "Neural Network":
-            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = kfold)
-        else:
-            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10)
-        print(accuracies.mean())
         
         print(algorithm + " Train Accuracy:")
         print(accuracy_train)
