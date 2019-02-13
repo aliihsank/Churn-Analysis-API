@@ -122,7 +122,7 @@ class GMS:
         s3.meta.client.put_object(Body=scalerInBytes, Bucket=bucket_name, Key=scalerPath)
         
     
-    def CheckHighScore(self, classifier = None, algorithm):
+    def CheckHighScore(self, algorithm, classifier = None):
         
         kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=0)
         
@@ -274,7 +274,7 @@ class GMS:
         else:
             classifier.fit(self.X_train, self.y_train)
     
-        self.CheckHighScore(classifier, modelType)
+        self.CheckHighScore(modelType, classifier)
 
 
     ''' Generates the model within the given parameters and run it '''
