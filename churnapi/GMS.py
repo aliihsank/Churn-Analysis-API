@@ -122,11 +122,12 @@ class GMS:
         s3.meta.client.put_object(Body=scalerInBytes, Bucket=bucket_name, Key=scalerPath)
         
     
-    def CheckHighScore(self, classifier, algorithm):
+    def CheckHighScore(self, classifier = None, algorithm):
         
         kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=0)
         
         if algorithm == "Neural Network":
+            classifier = KerasClassifier(build_fn = self.NeuralNetwork, epochs = 50, batch_size = 32, verbose = 0)
             accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = self.y_train, cv = kfold)
         else:
             accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = self.y_train, cv = 10)
