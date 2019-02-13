@@ -3,7 +3,7 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler, I
 from sklearn.model_selection import train_test_split
 
 from sklearn.metrics import accuracy_score, confusion_matrix
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, StratifiedKFold
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
@@ -135,8 +135,10 @@ class GMS:
         cm = confusion_matrix(self.y_test, y_test_predict)
         print(cm)
         
+        kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=0)
+        
         if algorithm == "Neural Network":
-            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10, fit_params = {"batch_size": 32, "epochs": 50}, n_jobs = 1)
+            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = kfold)
         else:
             accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = y_train_predict, cv = 10)
         print(accuracies.mean())
@@ -239,7 +241,7 @@ class GMS:
             self.X = np.delete(self.X, numOfUniqueValsForCatCols, 1)
         
      
-    def NeuralNetwork(self, **kwargs):
+    def NeuralNetwork(self):
         numOfCols = len(self.X[0])
         
         # Initialising the ANN
@@ -263,7 +265,6 @@ class GMS:
     def RunEncapsulatedModel(self, classifier, modelType):
         if modelType == "Neural Network":
             classifier = KerasClassifier(build_fn = classifier, epochs = 50, batch_size = 32, verbose = 0)
-            classifier.fit(self.X_train, self.y_train)
             #classifier.fit(self.X_train, self.y_train, batch_size = 32, epochs = 50)
         else:
             classifier.fit(self.X_train, self.y_train)
