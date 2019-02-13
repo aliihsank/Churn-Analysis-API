@@ -128,7 +128,7 @@ class GMS:
         
         if algorithm == "Neural Network":
             classifier = KerasClassifier(build_fn = self.NeuralNetwork, epochs = 50, batch_size = 32, verbose = 0)
-            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = self.y_train, cv = kfold)
+            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = self.y_train, cv = kfold, n_jobs=1)
         else:
             accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = self.y_train, cv = 10)
         print(accuracies.mean())
