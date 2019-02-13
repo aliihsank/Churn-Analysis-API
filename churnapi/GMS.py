@@ -263,6 +263,7 @@ class GMS:
     def RunEncapsulatedModel(self, classifier, modelType):
         if modelType == "Neural Network":
             classifier = KerasClassifier(build_fn = classifier, epochs = 50, batch_size = 32, verbose = 0)
+            classifier.fit(self.X_train, self.y_train)
             #classifier.fit(self.X_train, self.y_train, batch_size = 32, epochs = 50)
         else:
             classifier.fit(self.X_train, self.y_train)
