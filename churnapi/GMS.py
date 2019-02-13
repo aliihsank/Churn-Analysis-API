@@ -340,7 +340,33 @@ class GMS:
     
     
     def Run(self):
+        ''' Save status '''
+        self.SaveTrainStatus(0, 'Preprocess Starting...')
+                
+        #Preprocess dataset
+        self.Preprocess()
+                
+        ''' Save status '''
+        self.SaveTrainStatus(0, 'Preprocess Finished.GMS Starting...')
+    
+        #Create models, find best model
+        if self.data.get('modelType'):
+            self.GenerateModel(self.data)
+        else:
+            self.ModelMultiplexer()
+                
+        ''' Save status '''
+        self.SaveTrainStatus(0, 'GMS Finished.Best model is being saved.')
+            
+        #Save the best model
+        self.SaveModel()
+                
+        ''' Save status '''
+        self.SaveTrainStatus(1, 'Best model is saved.')
+                
+        print("GMS Finished Successfuly !")        
         
+        """
         try:
             ''' Save status '''
             self.SaveTrainStatus(0, 'Preprocess Starting...')
@@ -374,6 +400,6 @@ class GMS:
             
             print("GMS Finished with errors: " + str(e))
             
-        
+        """
             
             
