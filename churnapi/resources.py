@@ -31,7 +31,6 @@ def ValidateUser(uid):
     
     if user_ref.get().to_dict() is None:
         return False
-        print('kullanıcı yok')
     else:
         return True
     
@@ -80,7 +79,6 @@ def ValidateUserPlan(uid, requestedMethod):
         user_ref = db.collection(u'users').document(u'' + uid)
     
         oldPost = user_ref.get().to_dict()
-        print(oldPost)
         try:
             if oldPost["endDate"] > datetime.now():
                 if oldPost[requestedMethod] > 0:
@@ -92,7 +90,6 @@ def ValidateUserPlan(uid, requestedMethod):
             else:
                 return False
         except Exception as e:
-            print('hata' + e)
             return False
     else:
         return True
@@ -194,11 +191,13 @@ class ColumnsInfos(Resource):
         
         try:
             if(MakeValidations(uid, 'columnsInfos')):
+                print("validation'ı geçtik1")
                 data_frame = pd.DataFrame(dataset, columns = columns)
                 data_frame = data_frame[columns].apply(pd.to_numeric, errors="ignore")
                 
                 colInfos = []
                 
+                print("validation'ı geçtik2")
                 for i in range(len(columns)):
                     cat = 0
                     if(data_frame.iloc[:,[i]].values.dtype is np.dtype("object")):
@@ -208,6 +207,8 @@ class ColumnsInfos(Resource):
                     
                     colInfos.append({"name": columns[i], "values": counterObj.keys().tolist(), "counts": counterObj.tolist(), "cat": cat })
                     
+                
+                print("validation'ı geçtik3")
                 return {'info': 1, 'colInfos': colInfos}
             else:
                 return {'info': 0}

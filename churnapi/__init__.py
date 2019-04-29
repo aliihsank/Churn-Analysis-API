@@ -6,7 +6,7 @@ from firebase_admin import credentials
 from firebase_admin import storage
 from firebase_admin import firestore
 
-cred = credentials.Certificate('secret.json')
+cred = credentials.Certificate('././secret.json')
 default_app = firebase_admin.initialize_app(cred)
 
 
