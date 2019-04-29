@@ -92,8 +92,10 @@ def ValidateUserPlan(uid, requestedMethod):
                     print("olmadı")
                     return False
             else:
+                print('aaaa')
                 return False
         except Exception as e:
+            print('bbb' + e)
             return False
     else:
         return True
