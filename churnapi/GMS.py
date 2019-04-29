@@ -288,7 +288,7 @@ class GMS:
             classifier = XGBClassifier()
             
         elif(modelType == "Neural Network"):
-            classifier = self.NeuralNetwork
+            classifier = self.NeuralNetwork()
             
         #Run the classifier
         self.RunEncapsulatedModel(classifier, modelType)
