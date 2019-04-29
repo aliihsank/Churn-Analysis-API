@@ -25,8 +25,10 @@ import pandas as pd
 import numpy as np
 
 import pickle
-import pymongo
-import boto3
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import storage
+from firebase_admin import firestore
 
 
 class GMS:
@@ -42,8 +44,6 @@ class GMS:
     modelName = ""
     userName = ""
     
-    dburi = "mongodb://webuser:789456123Aa.@cluster0-shard-00-00-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-01-l51oi.gcp.mongodb.net:27017,cluster0-shard-00-02-l51oi.gcp.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true"
-    
     
     def __init__(self, data):
         self.name = ''
@@ -56,16 +56,24 @@ class GMS:
         self.categoricalcolumns = data["categoricalcolumns"]
         self.numericalcolumns = data["numericalcolumns"]
         
-        self.client = pymongo.MongoClient(self.dburi, ssl=True)
+        
+        cred = credentials.Certificate('secret.json')
+        default_app = firebase_admin.initialize_app(cred)
+        
+        
+        db = firestore.client()
+        #default_bucket = storage.bucket(name="churn-2537f.appspot.com", app=None)
+        
         self.db = self.client.churndb
         self.modeldetails = self.db.modeldetails
-        self.trainstatus = self.db.trainstatus
         self.ss = StandardScaler()
         self.kpca = KernelPCA(n_components = 2, kernel = 'rbf')
     
     
     def SaveTrainStatus(self, status, detail):
         if status == 1:
+            doc = db.collection(u'trainstatus').document(u'' + uid)
+
             self.trainstatus.delete_one({"username": self.userName, "modelname": self.modelName})            
         else:
             oldPost = {"username": self.userName, "modelname": self.modelName, "status": status, "detail": detail}

@@ -1,4 +1,4 @@
-from churnapi import api, MONGO_URL
+from churnapi import api, db
 from flask import request
 from flask_restful import Resource
 
@@ -8,41 +8,34 @@ import xgboost as xgb
 
 from datetime import datetime, timedelta
 
-from threading import Thread
-
 import pandas as pd
 import numpy as np
 import json
 
 import pickle
-import pymongo
 import boto3
 
 from .GMS import GMS
 
 
-dburi = MONGO_URL
-
-
-def MakeValidations(username, password, requestedMethod):
-    if (ValidateUser(username, password)):
-        if(ValidateUserPlan(username, requestedMethod)):
+def MakeValidations(uid, requestedMethod):
+    if (ValidateUser(uid)):
+        if(ValidateUserPlan(uid, requestedMethod)):
             return True
         
     return False
 
 
-def ValidateUser(username, password):
-    client = pymongo.MongoClient(dburi, ssl=True)
-    db = client.churndb
-            
-    if db.userdetails.find_one({"username": username, "password": password}) is None:
+def ValidateUser(uid):
+    user_ref = db.collection(u'users').document(u'' + uid)
+    
+    if user_ref.get().to_dict() is None:
         return False
     else:
         return True
     
     
-def ValidateUserPlan(username, requestedMethod):
+def ValidateUserPlan(uid, requestedMethod):
     
     """
     User Attributes:
@@ -81,16 +74,17 @@ def ValidateUserPlan(username, requestedMethod):
     
     """
     if requestedMethod == "columnsInfos" or requestedMethod == "train" or requestedMethod == "predict":
-        client = pymongo.MongoClient(dburi, ssl=True)
-        db = client.churndb
         
-        oldPost = db.userdetails.find_one({"username": username})
+        
+        user_ref = db.collection(u'users').document(u'' + uid)
+    
+        oldPost = user_ref.get().to_dict()
         
         try:
             if oldPost["endDate"] > datetime.now():
                 if oldPost[requestedMethod] > 0:
                     oldPost[requestedMethod] -= 1
-                    db.userdetails.update_one({"username": username}, {"$set": dict(oldPost)}, upsert=True)
+                    db.collection(u'users').document(u'' + uid).set(dict(oldPost))
                     return True
                 else:
                     return False
@@ -131,71 +125,18 @@ class MainPage(Resource):
 class Test(Resource):
     def get(self):
         return {'Test Message': "Hello User"}
-    
-
-class Register(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        email = data["email"]
-        username = data["username"]
-        password = data["password"]
-        
-        usertype = "Beginner"
-        columnsInfos = 2
-        train = 2
-        predict = 10
-        
-        if email is None or username is None or password is None:
-            return {'info': '0'}
-        else:
-            try:
-                client = pymongo.MongoClient(dburi, ssl=True)
-                db = client.churndb
-                
-                if db.userdetails.find_one({"username": username}) is None:
-                    post = { "email":email, "username": username, "password":password, "usertype": usertype, "columnsInfos": columnsInfos, "train": train, "predict": predict, "endDate": (datetime.now() + timedelta(days=365)) }
-                    db.userdetails.insert_one(post)
-                    return {'info': 1}
-                else:
-                    return {'info': 0}
-            except Exception as e:
-                return {'info': -1, 'details': str(e)}
-    
-    
-    
-class Login(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        username = data["username"]
-        password = data["password"]
-        
-        try:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-            
-            if db.userdetails.find_one({"username": username, "password": password}) is None:
-                return {'info': '0'}
-            else:
-                return {'info': '1'}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
-
 
 
 class GetUserPlan(Resource):
     def post(self):
         data = request.get_json()
         
-        username = data["username"]
-        password = data["password"]
+        uid = data["uid"]
         
         try:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-            
-            userdetails = db.userdetails.find_one({"username": username, "password": password}, {'_id': 0})
+            user_ref = db.collection(u'users').document(u'' + uid)
+    
+            userdetails = user_ref.get().to_dict()
             userdetails["endDate"] = json.dumps(userdetails["endDate"], indent=4, sort_keys=True, default=str)
             
             return {'info': 1, 'user': userdetails}
@@ -209,8 +150,7 @@ class UpdateUserPlan(Resource):
     def post(self):
         data = request.get_json()
         
-        username = data["username"]
-        password = data["password"]
+        uid = data["uid"]
         usertype = data["usertype"]
         
         if usertype == "Hobbiest":
@@ -225,17 +165,16 @@ class UpdateUserPlan(Resource):
             return {'info': 0}
             
         try:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-                
-            oldPost = db.userdetails.find_one({"username": username, "password": password})
+            user_ref = db.collection(u'users').document(u'' + uid)
+    
+            oldPost = user_ref.get().to_dict()
             oldPost["usertype"] = usertype
             oldPost["columnsInfos"] = columnsInfos
             oldPost["train"] = train
             oldPost["predict"] = predict
             oldPost["endDate"] = (datetime.now() + timedelta(days=365))
             
-            db.userdetails.update_one({"username": username}, {"$set": dict(oldPost)}, upsert=True)
+            db.collection(u'users').document(u'' + uid).set(oldPost)
             return {'info': 1}
         except Exception as e:
             return {'info': -1, 'details': str(e)}
@@ -247,13 +186,12 @@ class ColumnsInfos(Resource):
     def post(self):
         data = request.get_json()
         
-        username = data["username"]
-        password = data["password"]
+        uid = data["uid"]
         columns = data["columns"]
         dataset = data["dataset"]
         
         try:
-            if(MakeValidations(username, password, 'columnsInfos')):
+            if(MakeValidations(uid, 'columnsInfos')):
                 data_frame = pd.DataFrame(dataset, columns = columns)
                 data_frame = data_frame[columns].apply(pd.to_numeric, errors="ignore")
                 
@@ -280,22 +218,21 @@ class Train(Resource):
     def post(self):
         data = request.get_json()
         
-        username = data["username"]
-        password = data["password"]
+        uid = data["uid"]
         modelname = data["modelname"]
         
         try:
-            if(MakeValidations(username, password, 'train')):
-                client = pymongo.MongoClient(dburi, ssl=True)
-                db = client.churndb
-                
+            if(MakeValidations(uid, 'train')):
+                doc = db.collection(u'models').document(u'' + uid)
+    
                 modelnameExists = False
-                usermodelsInfo = db.modeldetails.find_one({"username": username })
+                usermodelsInfo = doc.get().to_dict()
                 if usermodelsInfo is not None:
                     for model in usermodelsInfo["models"]:
                         if(modelname == model["modelname"]):
                             modelnameExists = True
-                usermodelsInfo = db.trainstatus.find_one({"username": username, "modelname": modelname })
+                doc = db.collection(u'trainstatus').document(u'' + uid)
+                usermodelsInfo = doc.get().to_dict()
                 if usermodelsInfo is not None:
                     if usermodelsInfo["status"] == 0:
                         return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
@@ -319,19 +256,18 @@ class Predict(Resource):
     def post(self):
         data = request.get_json()
         
-        username = data["username"]
-        password = data["password"]
+        uid = data["uid"]
         modelname = data["modelname"]
         predictset = data["predictset"]
         
         try:
             #Load Model
-            if(MakeValidations(username, password, 'predict')):
+            if(MakeValidations(uid, 'predict')):
                 #Load Model
-                model = LoadModelFrom(username + modelname + ".txt")
+                model = LoadModelFrom(uid + modelname + ".txt")
             
                 #Feature Scaling (predictset comes onehotencoded)
-                ss = LoadScalerFrom(username + modelname + "scaler.txt")
+                ss = LoadScalerFrom(uid + modelname + "scaler.txt")
                 predictset = ss.transform(predictset)
                 
                 #Make prediction
@@ -353,18 +289,16 @@ class ModelList(Resource):
     def post(self):
         data = request.get_json()
         
-        username = data["username"]
-        password = data["password"]
+        uid = data["uid"]
         
         try:
-            if(MakeValidations(username, password, 'modellist')):
-                client = pymongo.MongoClient(dburi, ssl=True)
-                db = client.churndb
+            if(MakeValidations(uid, 'modellist')):
+                doc = db.collection(u'models').document(u'' + uid)
                 
-                if db.modeldetails.find_one({"username": username}, {'_id': 0}) is None:
+                if doc.get().to_dict() is None:
                     return {"info": 0}
                 else:
-                    post = db.modeldetails.find_one({"username": username}, {'_id': 0})
+                    post = doc.get().to_dict()
                     return {"info": 1, "models": post["models"]}
             else:
                 return {"info": 0}
@@ -378,15 +312,15 @@ class CheckTrainStatus(Resource):
     def post(self):
         data = request.get_json()
 
-        username = data["username"]
-        password = data["password"]
+        uid = data["uid"]
         
         try:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
+            docs = db.collection(u'trainstatus').where(u'capital', u'==', True).get()
             
-            if(MakeValidations(username, password, 'checkTrainStatus')):
-                statuslistCursor = db.trainstatus.find({"username": username}, {'_id': 0})
+            if(MakeValidations(uid, 'checkTrainStatus')):
+                statuslistCursor = []
+                for doc in docs:
+                    statuslistCursor.append(doc.to_dict())
                 if statuslistCursor is None:
                     return {'info': 0}
                 else:
@@ -400,56 +334,10 @@ class CheckTrainStatus(Resource):
             return {'info': -1, 'details': str(e)}
             
 
-
-class RemoveModel(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        username = data["username"]
-        password = data["password"]
-        modelname = data["modelname"]
-        
-        try:
-            client = pymongo.MongoClient(dburi, ssl=True)
-            db = client.churndb
-            
-            if(MakeValidations(username, password, 'removeModel')):
-                client = pymongo.MongoClient(dburi, ssl=True)
-                db = client.churndb
-        
-                #Remove from modeldetails
-                oldPost = db.modeldetails.find_one({"username": username })
-        
-                '''User has at least one model before '''
-                prevModels = oldPost["models"]
-                newModels = []
-                inModelDetails = False
-                for model in prevModels:
-                    if model["modelname"] == modelname:
-                        inModelDetails = True
-                    else:
-                        newModels.append(dict(model))
-                if inModelDetails:
-                    oldPost["models"] = newModels
-                    db.modeldetails.update_one({"username": username}, {"$set": dict(oldPost)}, upsert=True)
-                    return {'info': 1, 'details': 'Removed from Trained Models'}
-                else:
-                    #Remove from trainstatus
-                    db.trainstatus.delete_one({"username": username, "modelname": modelname })
-                    return {'info': 1, 'details': 'Removed from StatusList'}
-                
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
-                
-
-
      
         
 api.add_resource(MainPage, '/')
 api.add_resource(Test, '/test')
-
-api.add_resource(Register, '/register')
-api.add_resource(Login, '/login')
 
 api.add_resource(GetUserPlan, '/getUserPlan')
 api.add_resource(UpdateUserPlan, '/updateUserPlan')
@@ -460,5 +348,4 @@ api.add_resource(Predict, '/predict')
 
 api.add_resource(ModelList, '/modelList')
 api.add_resource(CheckTrainStatus, '/checkStatus')
-api.add_resource(RemoveModel, '/removeModel')
 
