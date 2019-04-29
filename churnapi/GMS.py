@@ -47,6 +47,7 @@ class GMS:
     
     
     def __init__(self, data):
+        print('asdasd111')
         self.name = ''
         self.data = data
         self.userName = data["username"]

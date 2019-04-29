@@ -182,6 +182,7 @@ class Train(Resource):
                 else:
                     print("gasasd")
                     gms = GMS(data)
+                    print("gasas22222d")
                     gms.Run()
                     #run = Thread(target = gms.Run, args = ())
                     #run.start()
