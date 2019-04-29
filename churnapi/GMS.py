@@ -42,15 +42,12 @@ class GMS:
     bestModelWithHighVariance = ""
     algorithmWithHighVariance = ""
     
-    modelName = ""
-    userName = ""
-    
     
     def __init__(self, data):
         print('asdasd111')
         self.name = ''
         self.data = data
-        self.userName = data["username"]
+        self.uid = data["uid"]
         self.modelName = data["modelname"]
         self.dataset = data["dataset"]
         self.columns = data["columns"]
@@ -89,7 +86,7 @@ class GMS:
         
     
     def SaveModelToDB(self):
-        oldPost = self.modeldetails.find_one({"username":  self.userName })
+        oldPost = self.modeldetails.find_one({"uid":  self.uid })
         
         catCols = []
         for catColIndex in self.categoricalcolumns:
@@ -105,20 +102,20 @@ class GMS:
         
         if oldPost is None:
             '''User doesn't have any model previously '''
-            oldPost = {"username": self.userName, "models": [dict(newModel)]}
+            oldPost = {"uid": self.uid, "models": [dict(newModel)]}
         else:
             '''User has at least one model before '''
             prevModels = oldPost["models"]
             prevModels.append(dict(newModel))
             oldPost["models"] = prevModels
         
-        self.modeldetails.update_one({"username": self.userName}, {"$set": dict(oldPost)}, upsert=True)
+        self.modeldetails.update_one({"uid": self.uid}, {"$set": dict(oldPost)}, upsert=True)
         
     
 
     def SaveModelToMemory(self):
-        modelPath = self.userName + self.modelName + ".txt"
-        scalerPath = self.userName + self.modelName + "scaler.txt"
+        modelPath = self.uid + self.modelName + ".txt"
+        scalerPath = self.uid + self.modelName + "scaler.txt"
         s3 = boto3.resource('s3')
         
         bucket_name = 'churn-bucket'
