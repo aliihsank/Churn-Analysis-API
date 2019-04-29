@@ -13,7 +13,10 @@ import numpy as np
 import json
 
 import pickle
-import boto3
+
+import firebase_admin
+from firebase_admin import storage
+
 
 from .GMS import GMS
 
@@ -93,16 +96,20 @@ def ValidateUserPlan(uid, requestedMethod):
         
     
         
-def LoadScalerFrom(scalerPath):
-    s3 = boto3.resource("s3").Bucket("churn-bucket")
-    scaler = pickle.loads(s3.Object(key=scalerPath).get()["Body"].read())
+def LoadScalerFrom(scalerPath):        
+    default_bucket = storage.bucket(name="churn-2537f.appspot.com", app=None)
     
-    return scaler
+    scalerBlob = default_bucket.blob(scalerPath)
+    loaded_scaler = pickle.loads(scalerBlob.download_as_string())
+    
+    return loaded_scaler
 
 
 def LoadModelFrom(modelPath):
-    s3 = boto3.resource("s3").Bucket("churn-bucket")
-    loaded_model = pickle.loads(s3.Object(key=modelPath).get()["Body"].read())
+    default_bucket = storage.bucket(name="churn-2537f.appspot.com", app=None)
+    
+    modelBlob = default_bucket.blob(modelPath)
+    loaded_model = pickle.loads(modelBlob.download_as_string())
     
     return loaded_model
     
@@ -222,32 +229,6 @@ class Predict(Resource):
         except Exception as e:
             print("Error: " + str(e))
             return {'info': -1, 'details': str(e)}
- 
-    
-
-        
-class ModelList(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        uid = data["uid"]
-        
-        try:
-            if(MakeValidations(uid, 'modellist')):
-                doc = db.collection(u'models').document(u'' + uid)
-                
-                if doc.get().to_dict() is None:
-                    return {"info": 0}
-                else:
-                    post = doc.get().to_dict()
-                    return {"info": 1, "models": post["models"]}
-            else:
-                return {"info": 0}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}        
-
-
-            
 
      
         
@@ -257,6 +238,4 @@ api.add_resource(Test, '/test')
 api.add_resource(ColumnsInfos, '/columnsInfos')
 api.add_resource(Train, '/train')
 api.add_resource(Predict, '/predict')
-
-api.add_resource(ModelList, '/modelList')
 
