@@ -78,7 +78,7 @@ class GMS:
         
     
     def SaveModelToDB(self):
-        oldPost = self.modeldetails.find_one({"uid":  self.uid })
+        oldPost = self.db.collection(u'models').document(u'' + self.uid)
         
         catCols = []
         for catColIndex in self.categoricalcolumns:
@@ -94,14 +94,14 @@ class GMS:
         
         if oldPost is None:
             '''User doesn't have any model previously '''
-            oldPost = {"uid": self.uid, "models": [dict(newModel)]}
+            newPost = {"models": [dict(newModel)]}
         else:
             '''User has at least one model before '''
             prevModels = oldPost["models"]
             prevModels.append(dict(newModel))
-            oldPost["models"] = prevModels
+            newPost["models"] = prevModels
         
-        self.modeldetails.update_one({"uid": self.uid}, {"$set": dict(oldPost)}, upsert=True)
+        oldPost.set(newPost)
         
     
 
