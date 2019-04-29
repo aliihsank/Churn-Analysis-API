@@ -77,12 +77,14 @@ class GMS:
         
     
     def SaveModelToDB(self):
+        print("55")
         oldPost = self.db.collection(u'models').document(u'' + self.uid)
         
         catCols = []
         for catColIndex in self.categoricalcolumns:
             catCols.append(dict({ "name": self.columns[catColIndex], "values": sorted(pd.unique(self.data_frame.iloc[:, catColIndex].values).tolist()) }))
         
+        print("66")
         numCols = []
         for numColIndex in self.numericalcolumns:
             numCols.append(self.columns[numColIndex])
@@ -91,6 +93,7 @@ class GMS:
         
         newModel = {"modelname": self.modelName, "catCols": catCols , "numCols": numCols, "targetCol": targetCol, "algorithm": self.algorithm, "accuracy": self.maxScore}
         
+        print("77")
         if oldPost is None:
             '''User doesn't have any model previously '''
             newPost = {"models": [dict(newModel)]}
@@ -100,6 +103,7 @@ class GMS:
             prevModels.append(dict(newModel))
             newPost["models"] = prevModels
         
+        print("88")
         oldPost.set(newPost)
         
     
@@ -108,17 +112,20 @@ class GMS:
         modelPath = self.uid + self.modelName + ".txt"
         scalerPath = self.uid + self.modelName + "scaler.txt"
         
-        
+        print("11")
         default_bucket = storage.bucket(name="churn-2537f.appspot.com", app=None)
         
         
+        print("22")
         modelInBytes = pickle.dumps(self.bestModel)
         scalerInBytes = pickle.dumps(self.ss)
         
         
+        print("33")
         modelBlob = default_bucket.blob(modelPath)
         modelBlob.upload_from_string(modelInBytes)
         
+        print("44")
         scalerBlob = default_bucket.blob(scalerPath)
         scalerBlob.upload_from_string(scalerInBytes)
         
