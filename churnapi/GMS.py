@@ -56,8 +56,8 @@ class GMS:
         self.numericalcolumns = data["numericalcolumns"]
         
         print('asdasd')
-        self.cred = credentials.Certificate('./secret.json')
-        self.default_app = firebase_admin.initialize_app(self.cred)
+        #self.cred = credentials.Certificate('./secret.json')
+        #self.default_app = firebase_admin.initialize_app(self.cred)
         print('asdadddddd')
         
         self.db = firestore.client()
