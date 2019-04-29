@@ -95,10 +95,12 @@ class GMS:
         
         print("77")
         if oldPost is None:
+            print("cccc")
             '''User doesn't have any model previously '''
             newPost = {"models": [dict(newModel)]}
             print("aaa")
         else:
+            print("ddd")
             '''User has at least one model before '''
             prevModels = oldPost["models"]
             print("bbb")
