@@ -57,11 +57,11 @@ class GMS:
         self.numericalcolumns = data["numericalcolumns"]
         
         
-        cred = credentials.Certificate('secret.json')
-        default_app = firebase_admin.initialize_app(cred)
+        self.cred = credentials.Certificate('secret.json')
+        self.default_app = firebase_admin.initialize_app(self.cred)
         
         
-        db = firestore.client()
+        self.db = firestore.client()
         #default_bucket = storage.bucket(name="churn-2537f.appspot.com", app=None)
         
         self.db = self.client.churndb
@@ -72,7 +72,7 @@ class GMS:
     
     def SaveTrainStatus(self, status, detail):
         if status == 1:
-            doc = db.collection(u'trainstatus').document(u'' + uid)
+            doc = self.db.collection(u'trainstatus').document(u'' + uid)
 
             self.trainstatus.delete_one({"username": self.userName, "modelname": self.modelName})            
         else:

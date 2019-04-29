@@ -19,7 +19,6 @@ from .GMS import GMS
 
 
 def MakeValidations(uid, requestedMethod):
-    print("uid: " + uid)
     if (ValidateUser(uid)):
         if(ValidateUserPlan(uid, requestedMethod)):
             return True
@@ -31,7 +30,6 @@ def ValidateUser(uid):
     user_ref = db.collection(u'users').document(u'' + uid)
     
     if user_ref.get().to_dict() is None:
-        print("user not validated")
         return False
     else:
         return True
@@ -81,17 +79,14 @@ def ValidateUserPlan(uid, requestedMethod):
         user_ref = db.collection(u'users').document(u'' + uid)
     
         oldPost = user_ref.get().to_dict()
-        print("oldpost:" + oldPost["username"])
         try:
             if oldPost[requestedMethod] > 0:
                 oldPost[requestedMethod] -= 1
                 db.collection(u'users').document(u'' + uid).set(dict(oldPost))
                 return True
             else:
-                print("olmadı")
                 return False
         except Exception as e:
-            print('bbb' + e)
             return False
     else:
         return True
@@ -126,62 +121,7 @@ class MainPage(Resource):
 class Test(Resource):
     def get(self):
         return {'Test Message': "Hello User"}
-
-
-class GetUserPlan(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        uid = data["uid"]
-        
-        try:
-            user_ref = db.collection(u'users').document(u'' + uid)
     
-            userdetails = user_ref.get().to_dict()
-            userdetails["endDate"] = json.dumps(userdetails["endDate"], indent=4, sort_keys=True, default=str)
-            
-            return {'info': 1, 'user': userdetails}
-            
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
-
-
-
-class UpdateUserPlan(Resource):
-    def post(self):
-        data = request.get_json()
-        
-        uid = data["uid"]
-        usertype = data["usertype"]
-        
-        if usertype == "Hobbiest":
-            columnsInfos = 5
-            train = 5
-            predict = 20
-        elif usertype == "Professional":
-            columnsInfos = 10
-            train = 10
-            predict = 40
-        else:
-            return {'info': 0}
-            
-        try:
-            user_ref = db.collection(u'users').document(u'' + uid)
-    
-            oldPost = user_ref.get().to_dict()
-            oldPost["usertype"] = usertype
-            oldPost["columnsInfos"] = columnsInfos
-            oldPost["train"] = train
-            oldPost["predict"] = predict
-            oldPost["endDate"] = (datetime.now() + timedelta(days=365))
-            
-            db.collection(u'users').document(u'' + uid).set(oldPost)
-            return {'info': 1}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
-    
-
-
 
 class ColumnsInfos(Resource):
     def post(self):
@@ -193,13 +133,11 @@ class ColumnsInfos(Resource):
         
         try:
             if(MakeValidations(uid, 'columnsInfos')):
-                print("validation'ı geçtik1")
                 data_frame = pd.DataFrame(dataset, columns = columns)
                 data_frame = data_frame[columns].apply(pd.to_numeric, errors="ignore")
                 
                 colInfos = []
                 
-                print("validation'ı geçtik2")
                 for i in range(len(columns)):
                     cat = 0
                     if(data_frame.iloc[:,[i]].values.dtype is np.dtype("object")):
@@ -209,13 +147,10 @@ class ColumnsInfos(Resource):
                     
                     colInfos.append({"name": columns[i], "values": counterObj.keys().tolist(), "counts": counterObj.tolist(), "cat": cat })
                     
-                
-                print("validation'ı geçtik3")
                 return {'info': 1, 'colInfos': colInfos}
             else:
                 return {'info': 0}
         except Exception as e:
-            print("haaaaa: " + e)
             return {'info': -1, 'details': str(e)}
      
 
@@ -245,15 +180,17 @@ class Train(Resource):
                 if modelnameExists:
                     return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
                 else:
+                    print("gasasd")
                     gms = GMS(data)
                     gms.Run()
                     #run = Thread(target = gms.Run, args = ())
                     #run.start()
                     return {'info': 1}
             else:
+                print('asasd')
                 return {'info': 0, 'details': 'Your have reached your limit.'}
         except Exception as e:
-            print(str(e))
+            print("aa" + str(e))
             return {'info': -1, 'details': str(e)}
             
 
