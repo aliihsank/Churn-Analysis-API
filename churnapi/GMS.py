@@ -57,10 +57,10 @@ class GMS:
         self.categoricalcolumns = data["categoricalcolumns"]
         self.numericalcolumns = data["numericalcolumns"]
         
-        
+        print('asdasd')
         self.cred = credentials.Certificate('./secret.json')
         self.default_app = firebase_admin.initialize_app(self.cred)
-        
+        print('asdadddddd')
         
         self.db = firestore.client()
         #default_bucket = storage.bucket(name="churn-2537f.appspot.com", app=None)
@@ -352,6 +352,7 @@ class GMS:
     
     
     def Run(self):
+        print("runbaşladı")
         ''' Save status '''
         self.SaveTrainStatus(0, 'Preprocess Starting...')
                 
