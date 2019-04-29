@@ -23,7 +23,6 @@ from keras.wrappers.scikit_learn import KerasClassifier
 
 import pandas as pd
 import numpy as np
-import boto3
 
 import pickle
 import firebase_admin
@@ -108,15 +107,22 @@ class GMS:
     def SaveModelToMemory(self):
         modelPath = self.uid + self.modelName + ".txt"
         scalerPath = self.uid + self.modelName + "scaler.txt"
-        s3 = boto3.resource('s3')
         
-        bucket_name = 'churn-bucket'
+        
+        default_bucket = storage.bucket(name="churn-2537f.appspot.com", app=None)
+        
         
         modelInBytes = pickle.dumps(self.bestModel)
         scalerInBytes = pickle.dumps(self.ss)
- 
-        s3.meta.client.put_object(Body=modelInBytes, Bucket=bucket_name, Key=modelPath)
-        s3.meta.client.put_object(Body=scalerInBytes, Bucket=bucket_name, Key=scalerPath)
+        
+        
+        modelBlob = default_bucket.blob(modelPath)
+        modelBlob.upload_from_string(modelInBytes)
+        
+        scalerBlob = default_bucket.blob(scalerPath)
+        scalerBlob.upload_from_string(scalerInBytes)
+        
+        
         
     
     def CheckMetrics(self, algorithm, classifier):

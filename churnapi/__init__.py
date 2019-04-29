@@ -11,7 +11,7 @@ default_app = firebase_admin.initialize_app(cred)
 
 
 db = firestore.client()
-default_bucket = storage.bucket(name="churn-2537f.appspot.com", app=None)
+#default_bucket = storage.bucket(name="churn-2537f.appspot.com", app=None)
 
 
 #doc_ref = db.collection(u'users').document(u'alovelace')
