@@ -58,7 +58,7 @@ class GMS:
         self.numericalcolumns = data["numericalcolumns"]
         
         
-        self.cred = credentials.Certificate('secret.json')
+        self.cred = credentials.Certificate('./secret.json')
         self.default_app = firebase_admin.initialize_app(self.cred)
         
         
