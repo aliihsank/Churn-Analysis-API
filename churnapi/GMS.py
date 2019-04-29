@@ -69,11 +69,11 @@ class GMS:
     
     def SaveTrainStatus(self, status, detail):
         print('Girdi')
+        oldPost = self.db.collection(u'trainstatus').document(u'' + self.data["uid"] + "." + self.modelName)
         if status == 1:
-            self.db.collection(u'trainstatus').where(u'uid', u'==', u'' + self.data["uid"]).where(u'modelname', u'==', u'' + self.modelName).delete()       
+            oldPost.delete()
         else:
-            oldPost = {"detail": detail, "modelname": self.modelName, "status": status, "uid": self.data["uid"]}
-            self.db.collection(u'trainstatus').where(u'uid', u'==', u'' + self.data["uid"]).where(u'modelname', u'==', u'' + self.modelName).set(dict(oldPost))
+            oldPost.set({"status": status, "detail": detail})
         print('çıktı')
     
     
