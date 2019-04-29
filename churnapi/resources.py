@@ -81,7 +81,7 @@ def ValidateUserPlan(uid, requestedMethod):
         user_ref = db.collection(u'users').document(u'' + uid)
     
         oldPost = user_ref.get().to_dict()
-        print("oldpost:" + oldPost)
+        print("oldpost:" + oldPost["username"])
         try:
             if oldPost["endDate"] > datetime.now():
                 if oldPost[requestedMethod] > 0:
