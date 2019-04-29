@@ -94,7 +94,7 @@ class GMS:
         newModel = {"modelname": self.modelName, "catCols": catCols , "numCols": numCols, "targetCol": targetCol, "algorithm": self.algorithm, "accuracy": self.maxScore}
         
         print("77")
-        if oldPost is None:
+        if oldPost.get().to_dict() is None:
             print("cccc")
             '''User doesn't have any model previously '''
             newPost = {"models": [dict(newModel)]}
