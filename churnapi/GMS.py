@@ -44,7 +44,6 @@ class GMS:
     
     
     def __init__(self, data):
-        print('asdasd111')
         self.name = ''
         self.data = data
         self.uid = data["uid"]
@@ -55,11 +54,6 @@ class GMS:
         self.categoricalcolumns = data["categoricalcolumns"]
         self.numericalcolumns = data["numericalcolumns"]
         
-        print('asdasd')
-        #self.cred = credentials.Certificate('./secret.json')
-        #self.default_app = firebase_admin.initialize_app(self.cred)
-        print('asdadddddd')
-        
         self.db = firestore.client()
         #default_bucket = storage.bucket(name="churn-2537f.appspot.com", app=None)
         
@@ -68,13 +62,11 @@ class GMS:
     
     
     def SaveTrainStatus(self, status, detail):
-        print('Girdi')
         oldPost = self.db.collection(u'trainstatus').document(u'' + self.data["uid"] + "." + self.modelName)
         if status == 1:
             oldPost.delete()
         else:
             oldPost.set({"status": status, "detail": detail})
-        print('çıktı')
     
     
     def SaveModel(self):
@@ -128,16 +120,6 @@ class GMS:
         
     
     def CheckMetrics(self, algorithm, classifier):
-        
-        kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=0)
-        
-        if algorithm == "Neural Network":
-            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = self.y_train, cv = kfold, n_jobs=1)
-        else:
-            accuracies = cross_val_score(estimator = classifier, X = self.X_train, y = self.y_train, cv = 10)
-        print(accuracies.mean())
-        
-        classifier.fit(self.X_train, self.y_train)
         
         y_train_predict = classifier.predict(self.X_train)
         y_train_predict = (y_train_predict > 0.5)
@@ -273,8 +255,7 @@ class GMS:
 
     def RunEncapsulatedModel(self, classifier, modelType):
         if modelType == "Neural Network":
-            classifier = KerasClassifier(build_fn = classifier, epochs = 50, batch_size = 32, verbose = 0)
-            #classifier.fit(self.X_train, self.y_train, batch_size = 32, epochs = 50)
+            classifier.fit(self.X_train, self.y_train, batch_size = 32, epochs = 50)
         else:
             classifier.fit(self.X_train, self.y_train)
     
@@ -350,13 +331,12 @@ class GMS:
     
     
     def Run(self):
-        print("runbaşladı")
         ''' Save status '''
         self.SaveTrainStatus(0, 'Preprocess Starting...')
                 
         #Preprocess dataset
         self.Preprocess()
-        print("adww")
+        
         ''' Save status '''
         self.SaveTrainStatus(0, 'Preprocess Finished.GMS Starting...')
     

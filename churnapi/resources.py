@@ -180,18 +180,15 @@ class Train(Resource):
                 if modelnameExists:
                     return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
                 else:
-                    print("gasasd")
                     gms = GMS(data)
-                    print("gasas22222d")
                     gms.Run()
                     #run = Thread(target = gms.Run, args = ())
                     #run.start()
                     return {'info': 1}
             else:
-                print('asasd')
                 return {'info': 0, 'details': 'Your have reached your limit.'}
         except Exception as e:
-            print("aa" + str(e))
+            print("Error:" + str(e))
             return {'info': -1, 'details': str(e)}
             
 
@@ -223,7 +220,7 @@ class Predict(Resource):
             else:
                 return {"info": 0}
         except Exception as e:
-            print("Hata: " + str(e))
+            print("Error: " + str(e))
             return {'info': -1, 'details': str(e)}
  
     
