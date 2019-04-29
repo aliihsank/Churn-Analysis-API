@@ -217,6 +217,7 @@ class ColumnsInfos(Resource):
             else:
                 return {'info': 0}
         except Exception as e:
+            print("haaaaa: " + e)
             return {'info': -1, 'details': str(e)}
      
 
