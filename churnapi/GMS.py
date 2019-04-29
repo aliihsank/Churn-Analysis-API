@@ -72,7 +72,7 @@ class GMS:
     
     def SaveTrainStatus(self, status, detail):
         if status == 1:
-            doc = self.db.collection(u'trainstatus').document(u'' + uid)
+            self.db.collection(u'trainstatus').where(u'uid', u'==', u'' + self.data["uid"]).where(u'modelname', u'==', u'' + self.modelName).delete()
 
             self.trainstatus.delete_one({"username": self.userName, "modelname": self.modelName})            
         else:
@@ -358,7 +358,7 @@ class GMS:
                 
         #Preprocess dataset
         self.Preprocess()
-                
+        print("adww")
         ''' Save status '''
         self.SaveTrainStatus(0, 'Preprocess Finished.GMS Starting...')
     
