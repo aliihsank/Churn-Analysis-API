@@ -31,6 +31,7 @@ def ValidateUser(uid):
     
     if user_ref.get().to_dict() is None:
         return False
+        print('kullanıcı yok')
     else:
         return True
     
@@ -79,7 +80,7 @@ def ValidateUserPlan(uid, requestedMethod):
         user_ref = db.collection(u'users').document(u'' + uid)
     
         oldPost = user_ref.get().to_dict()
-        
+        print(oldPost)
         try:
             if oldPost["endDate"] > datetime.now():
                 if oldPost[requestedMethod] > 0:
@@ -91,6 +92,7 @@ def ValidateUserPlan(uid, requestedMethod):
             else:
                 return False
         except Exception as e:
+            print('hata' + e)
             return False
     else:
         return True
