@@ -19,6 +19,7 @@ from .GMS import GMS
 
 
 def MakeValidations(uid, requestedMethod):
+    print("uid: " + uid)
     if (ValidateUser(uid)):
         if(ValidateUserPlan(uid, requestedMethod)):
             return True
@@ -30,6 +31,7 @@ def ValidateUser(uid):
     user_ref = db.collection(u'users').document(u'' + uid)
     
     if user_ref.get().to_dict() is None:
+        print("user not validated")
         return False
     else:
         return True
@@ -79,6 +81,7 @@ def ValidateUserPlan(uid, requestedMethod):
         user_ref = db.collection(u'users').document(u'' + uid)
     
         oldPost = user_ref.get().to_dict()
+        print("oldpost:" + oldPost)
         try:
             if oldPost["endDate"] > datetime.now():
                 if oldPost[requestedMethod] > 0:
@@ -86,6 +89,7 @@ def ValidateUserPlan(uid, requestedMethod):
                     db.collection(u'users').document(u'' + uid).set(dict(oldPost))
                     return True
                 else:
+                    print("olmadı")
                     return False
             else:
                 return False
