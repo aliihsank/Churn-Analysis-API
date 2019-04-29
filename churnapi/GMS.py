@@ -23,6 +23,7 @@ from keras.wrappers.scikit_learn import KerasClassifier
 
 import pandas as pd
 import numpy as np
+import boto3
 
 import pickle
 import firebase_admin
@@ -64,20 +65,18 @@ class GMS:
         self.db = firestore.client()
         #default_bucket = storage.bucket(name="churn-2537f.appspot.com", app=None)
         
-        self.db = self.client.churndb
-        self.modeldetails = self.db.modeldetails
         self.ss = StandardScaler()
         self.kpca = KernelPCA(n_components = 2, kernel = 'rbf')
     
     
     def SaveTrainStatus(self, status, detail):
+        print('Girdi')
         if status == 1:
-            self.db.collection(u'trainstatus').where(u'uid', u'==', u'' + self.data["uid"]).where(u'modelname', u'==', u'' + self.modelName).delete()
-
-            self.trainstatus.delete_one({"username": self.userName, "modelname": self.modelName})            
+            self.db.collection(u'trainstatus').where(u'uid', u'==', u'' + self.data["uid"]).where(u'modelname', u'==', u'' + self.modelName).delete()       
         else:
-            oldPost = {"username": self.userName, "modelname": self.modelName, "status": status, "detail": detail}
-            self.trainstatus.update_one({"username": self.userName, "modelname": self.modelName}, {"$set": oldPost}, upsert=True)
+            oldPost = {"detail": detail, "modelname": self.modelName, "status": status, "uid": self.data["uid"]}
+            self.db.collection(u'trainstatus').where(u'uid', u'==', u'' + self.data["uid"]).where(u'modelname', u'==', u'' + self.modelName).set(dict(oldPost))
+        print('çıktı')
     
     
     def SaveModel(self):
