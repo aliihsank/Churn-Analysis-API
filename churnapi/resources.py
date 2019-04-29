@@ -248,33 +248,7 @@ class ModelList(Resource):
         except Exception as e:
             return {'info': -1, 'details': str(e)}        
 
-    
 
-
-class CheckTrainStatus(Resource):
-    def post(self):
-        data = request.get_json()
-
-        uid = data["uid"]
-        
-        try:
-            docs = db.collection(u'trainstatus').where(u'capital', u'==', True).get()
-            
-            if(MakeValidations(uid, 'checkTrainStatus')):
-                statuslistCursor = []
-                for doc in docs:
-                    statuslistCursor.append(doc.to_dict())
-                if statuslistCursor is None:
-                    return {'info': 0}
-                else:
-                    statuslist = []
-                    for status in statuslistCursor:
-                        statuslist.append(status)
-                    return {'info': 1, 'statuslist': statuslist }
-            else:
-                return {'info': 0}
-        except Exception as e:
-            return {'info': -1, 'details': str(e)}
             
 
      
@@ -282,13 +256,9 @@ class CheckTrainStatus(Resource):
 api.add_resource(MainPage, '/')
 api.add_resource(Test, '/test')
 
-api.add_resource(GetUserPlan, '/getUserPlan')
-api.add_resource(UpdateUserPlan, '/updateUserPlan')
-
 api.add_resource(ColumnsInfos, '/columnsInfos')
 api.add_resource(Train, '/train')
 api.add_resource(Predict, '/predict')
 
 api.add_resource(ModelList, '/modelList')
-api.add_resource(CheckTrainStatus, '/checkStatus')
 
