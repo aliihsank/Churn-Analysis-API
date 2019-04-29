@@ -83,16 +83,12 @@ def ValidateUserPlan(uid, requestedMethod):
         oldPost = user_ref.get().to_dict()
         print("oldpost:" + oldPost["username"])
         try:
-            if oldPost["endDate"] > datetime.now():
-                if oldPost[requestedMethod] > 0:
-                    oldPost[requestedMethod] -= 1
-                    db.collection(u'users').document(u'' + uid).set(dict(oldPost))
-                    return True
-                else:
-                    print("olmadı")
-                    return False
+            if oldPost[requestedMethod] > 0:
+                oldPost[requestedMethod] -= 1
+                db.collection(u'users').document(u'' + uid).set(dict(oldPost))
+                return True
             else:
-                print('aaaa')
+                print("olmadı")
                 return False
         except Exception as e:
             print('bbb' + e)
