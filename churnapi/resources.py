@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 import json
 
-import Thread
+from threading import Thread
 import pickle
 
 import firebase_admin
