@@ -54,7 +54,6 @@ class GMS:
         self.numericalcolumns = data["numericalcolumns"]
         
         self.db = firestore.client()
-        #default_bucket = storage.bucket(name="churn-2537f.appspot.com", app=None)
         
         self.ss = StandardScaler()
         self.kpca = KernelPCA(n_components = 2, kernel = 'rbf')
