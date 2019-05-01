@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import json
 
+import Thread
 import pickle
 
 import firebase_admin
@@ -188,9 +189,9 @@ class Train(Resource):
                     return {'info': 0, 'details': 'This model name already exists. Please enter another name.'}
                 else:
                     gms = GMS(data)
-                    gms.Run()
-                    #run = Thread(target = gms.Run, args = ())
-                    #run.start()
+                    #gms.Run()
+                    run = Thread(target = gms.Run, args = ())
+                    run.start()
                     return {'info': 1}
             else:
                 return {'info': 0, 'details': 'Your have reached your limit.'}
