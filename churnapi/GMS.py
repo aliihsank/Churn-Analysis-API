@@ -78,7 +78,6 @@ class GMS:
     
     def SaveModelToDB(self):
         print("55")
-        oldPost = self.db.collection(u'models').document(u'' + self.uid)
         
         catCols = []
         for catColIndex in self.categoricalcolumns:
@@ -91,26 +90,12 @@ class GMS:
             
         targetCol = dict({ "name": self.columns[self.target], "values": sorted(pd.unique(self.data_frame.iloc[:, self.target].values).tolist()) })
         
-        newModel = {"modelname": self.modelName, "catCols": catCols , "numCols": numCols, "targetCol": targetCol, "algorithm": self.algorithm, "accuracy": self.maxScore}
+        newModel = {"modelname": self.modelName, "catCols": catCols , "numCols": numCols, "targetCol": targetCol, "algorithm": self.algorithm, "accuracy": self.maxScore, "uid": self.uid}
         
         print("77")
-        if oldPost.get().to_dict() is None:
-            print("cccc")
-            '''User doesn't have any model previously '''
-            newPost = {"models": [dict(newModel)]}
-            print("aaa")
-        else:
-            print("ddd")
-            '''User has at least one model before '''
-            prevModels = oldPost["models"]
-            print("bbb")
-            prevModels.append(dict(newModel))
-            
-            print("ccc")
-            newPost["models"] = prevModels
         
         print("88")
-        oldPost.set(newPost)
+        self.db.collection(u'models').add(newModel)
         
     
 
