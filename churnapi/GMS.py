@@ -64,7 +64,7 @@ class GMS:
         if status == 1:
             oldPost.delete()
         else:
-            oldPost.set({"status": status, "detail": detail})
+            oldPost.set({"status": status, "detail": detail, "uid" : self.data["uid"]})
     
     
     def SaveModel(self):
