@@ -25,5 +25,5 @@ keras==2.2.4
 
 xgboost==0.81
 
-joblib==0.13.1
+joblib==1.2.0
 firebase_admin==2.16.0
